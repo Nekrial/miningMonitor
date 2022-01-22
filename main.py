@@ -351,12 +351,29 @@ class monitoringFrame(tk.Frame):
             tk.Button(self, text="Reset Profiles", command=lambda:resetAll()).pack
 
             # The monitoring loop. Checks each gpus present
-        for gpu in gpuList:
-            gpu.checkMaxHash()
-        tk.Label(self,
-                 text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings").pack(
+        label1 = tk.Label(self,
+                 text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings")
+        label1.pack(
             fill="x", pady=10)
-        tk.Button(self, text="Reset Profiles", command=lambda:resetAll).pack()
+        button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
+        button1.pack()
+        try:
+            for gpu in gpuList:
+
+                    gpu.checkMaxHash()
+                    gpu.checkMinHash()
+                    gpu.checkMaxPower()
+                    gpu.checkCoreTemp()
+                    gpu.checkMemTemp()
+        except:
+            button1.pack_forget()
+            label1.pack_forget()
+            tk.Label(self,
+                     text="An invalid email address was detected in your profile\n"
+                          "Please reset your profiles with the button below").pack(
+                fill="x", pady=10)
+            tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
+
         self.after(5000,lambda: master.switch_frame(monitoringFrame))
 
 

@@ -8,6 +8,7 @@ import json
 from pynvraw import *
 import smtplib, ssl
 import config
+from tkinter import messagebox
 
 class gpu:
     def __init__(self, deviceID, minerType, email, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash):
@@ -26,40 +27,40 @@ class gpu:
         currentTemp = gpu.core_temp
 
         if currentTemp >= self.coreTemp:
-            self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+            emailCheck = self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                              f"The max temp you set me to monitor was {self.coreTemp}")
 
-        return currentTemp
+        return emailCheck
 
     def checkMaxPower(self):
         gpu = get_phys_gpu(self.deviceID)
         currentPower = gpu.power
 
         if currentPower >= self.coreTemp:
-            self.notifyEmail(f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
+            emailCheck = self.notifyEmail(f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
                              f"The max power draw you set me to monitor was {self.powerMax}")
 
-        return currentPower
+        return emailCheck
 
     def hotSpotTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.hotspot_temp
 
-        if currentTemp >= self.coreTemp:
-            self.notifyEmail(f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                             f"The max power draw you set me to monitor was {self.hotSpot}")
+        if currentTemp >= self.hotSpotTemp():
+            emailCheck = self.notifyEmail(f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+                             f"The max how spot temp set me to monitor was {self.hotSpot}")
 
-        return currentTemp
+        return emailCheck
 
-    def hotSpotTemp(self):
+    def checkMemTemp(self):
         gpu = get_phys_gpu(self.deviceID)
-        currentTemp = gpu.hotspot_temp
+        currentTemp = gpu.vram_temp
 
-        if currentTemp >= self.coreTemp:
-            self.notifyEmail(f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                             f"The max power draw you set me to monitor was {self.hotSpot}")
+        if currentTemp >= self.memTemp:
+            emailCheck = self.notifyEmail(f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+                             f"The max memory temp you set me to monitor was {self.memTemp}")
 
-        return currentTemp
+        return emailCheck
 
     def checkMaxHash(self):
         workerInformation = requests.get('http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
@@ -68,10 +69,10 @@ class gpu:
         currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
 
         if currentSpeed >= self.maxHash:
-            self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+            emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                              f"The min hashrate you set me to monitor was {self.maxHash}")
 
-        return currentSpeed
+        return emailCheck
 
     def checkMinHash(self):
         workerInformation = requests.get(
@@ -81,10 +82,10 @@ class gpu:
         currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
 
         if currentSpeed <= self.maxHash:
-            self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+            emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                              f"The min hashrate you set me to monitor was {self.minHash}")
 
-        return currentSpeed
+        return emailCheck
 
 
 
@@ -104,7 +105,7 @@ class gpu:
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, message)
         except smtplib.SMTPRecipientsRefused:
-            return "Email not valid"
+            raise Exception("Please reset the profiles and add a valid email")
 
     @classmethod
     def from_json(cls,json_string):
