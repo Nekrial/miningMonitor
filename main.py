@@ -346,8 +346,6 @@ class monitoringFrame(tk.Frame):
             for f in os.listdir(dir):
                 os.remove(os.path.join(dir, f))
                 master.switch_frame(StartPage)
-        kappa = gpuList[0]
-
         if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
             tk.Label(self,
                      text="I cannot connect to the miner. Do you have it running?").pack(
@@ -355,12 +353,12 @@ class monitoringFrame(tk.Frame):
             tk.Button(self, text="Reset Profiles", command=lambda:resetAll()).pack
 
             # The monitoring loop. Checks each gpus present
-        elif connectionAndAPI.testGpuConnection() != "testGPUConnection Error":
-            print(gpuList[1].checkMemoryTemp())
-            tk.Label(self,
-                     text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings").pack(
-                fill="x", pady=10)
-            tk.Button(self, text="Reset Profiles", command=lambda:resetAll).pack()
+        for gpu in gpuList:
+            gpu.checkMemoryTemp()
+        tk.Label(self,
+                 text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings").pack(
+            fill="x", pady=10)
+        tk.Button(self, text="Reset Profiles", command=lambda:resetAll).pack()
         self.after(5000,lambda: master.switch_frame(monitoringFrame))
 
 

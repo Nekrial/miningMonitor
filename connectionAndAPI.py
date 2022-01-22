@@ -22,26 +22,62 @@ class gpu:
         self.minHash = minHash
 
     def checkCoreTemp(self):
-        return
+        gpu = get_phys_gpu(self.deviceID)
+        currentTemp = gpu.core_temp
+
+        if currentTemp >= self.coreTemp:
+            self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+                             f"The max temp you set me to monitor was {self.coreTemp}")
+
+        return currentTemp
+
+    def checkMaxPower(self):
+        gpu = get_phys_gpu(self.deviceID)
+        currentPower = gpu.power
+
+        if currentPower >= self.coreTemp:
+            self.notifyEmail(f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
+                             f"The max power draw you set me to monitor was {self.powerMax}")
+
+        return currentPower
+
+    def hotSpotTemp(self):
+        gpu = get_phys_gpu(self.deviceID)
+        currentTemp = gpu.hotspot_temp
+
+        if currentTemp >= self.coreTemp:
+            self.notifyEmail(f"The current power draw of gpu {self.deviceID} is currently {currentTemp}c\n"
+                             f"The max power draw you set me to monitor was {self.powerMax}")
+
+        return currentTemp
+
     def checkMemoryTemp(self):
         gpu = get_phys_gpu(self.deviceID)
-        if gpu.vram_temp == None:
-            return "No vram sensor to monitor"
-            if gpu.vram_temp >= self.memTemp:
-                print("Helllllooo")
+        currentTemp = gpu.vram_temp
 
-            return gpu.vram_temp
+        if currentTemp == None:
+            return "No vram sensor to monitor"
+        if currentTemp >= self.memTemp:
+            self.notifyEmail(f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+                             f"The max temp you set me to monitor was {self.memTemp}")
+
+        return currentTemp
+
     def notifyEmail(self,whatBroke):
 
+
         port = 465  # For SSL
-        password = input(config.emailPassword)
+        smtp_server = "smtp.gmail.com"
+        sender_email = "miningmonitoremail@gmail.com"  # Enter your address
+        receiver_email = self.email  # Enter receiver address
+        password = config.emailPassword
+        message = whatBroke
+        print("here")
 
-        # Create a secure SSL context
         context = ssl.create_default_context()
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-            server.login("miningmonitoremail@gmail.com", password)
-            # TODO: Send email here
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message)
 
     @classmethod
     def from_json(cls,json_string):
@@ -57,9 +93,11 @@ class gpu:
             "minHash": 1
 
         }
+        json_string = str(json_string).replace("null", "None")
         jsonBeingWeird = eval(str(json_string))
+
         for k, v in jsonBeingWeird.items():
-            if v is None:
+            if v == None:
                 jsonBeingWeird[k] = defaults[k]
         return cls(**jsonBeingWeird)
 
@@ -126,7 +164,6 @@ def gatherConfigs():
                 f.close()
         except IOError:
             continue
-    print(configList)
     return(configList)
 
 def montoring(incJson):
