@@ -62,15 +62,32 @@ class gpu:
         return currentTemp
 
     def checkMaxHash(self):
-        
+        workerInformation = requests.get('http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
+        workerInformation = workerInformation.json()
 
-        if currentTemp == None:
-            return "No vram sensor to monitor"
-        if currentTemp >= self.memTemp:
-            self.notifyEmail(f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                             f"The max temp you set me to monitor was {self.memTemp}")
+        currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
 
-        return currentTemp
+        if currentSpeed >= self.maxHash:
+            self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                             f"The min hashrate you set me to monitor was {self.maxHash}")
+
+        return currentSpeed
+
+    def checkMinHash(self):
+        workerInformation = requests.get(
+            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
+        workerInformation = workerInformation.json()
+
+        currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
+
+        if currentSpeed <= self.maxHash:
+            self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                             f"The min hashrate you set me to monitor was {self.minHash}")
+
+        return currentSpeed
+
+
+
 
     def notifyEmail(self,whatBroke):
 
@@ -81,12 +98,13 @@ class gpu:
         receiver_email = self.email  # Enter receiver address
         password = config.emailPassword
         message = whatBroke
-        print("here")
-
-        context = ssl.create_default_context()
-        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message)
+        try:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message)
+        except smtplib.SMTPRecipientsRefused:
+            return "Email not valid"
 
     @classmethod
     def from_json(cls,json_string):

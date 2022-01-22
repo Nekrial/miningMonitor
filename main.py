@@ -223,8 +223,6 @@ class VariableSelection(tk.Frame):
                         outfile.write(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
                         outfile.close()
-                        #todo fix this below
-                        kappa = connectionAndAPI.currentDeviceWithoutConfig()
                         if len(gpuList) != connectionAndAPI.countGpus():
                             app.switch_frame(StartPage)
                         else:
@@ -354,7 +352,7 @@ class monitoringFrame(tk.Frame):
 
             # The monitoring loop. Checks each gpus present
         for gpu in gpuList:
-            gpu.checkMemoryTemp()
+            gpu.checkMaxHash()
         tk.Label(self,
                  text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings").pack(
             fill="x", pady=10)
