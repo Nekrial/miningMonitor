@@ -359,7 +359,6 @@ class monitoringFrame(tk.Frame):
         button1.pack()
         try:
             for gpu in gpuList:
-
                     gpu.checkMaxHash()
                     gpu.checkMinHash()
                     gpu.checkMaxPower()
@@ -381,5 +380,6 @@ class monitoringFrame(tk.Frame):
 
 if __name__ == "__main__":
     app = createApp()
+    
 
     app.mainloop()
