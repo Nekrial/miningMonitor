@@ -9,6 +9,8 @@ from requests import *
 import connectionAndAPI
 from connectionAndAPI import *
 import os
+from configValidation import *
+import configValidation
 
 
 gpuList=[]
@@ -42,6 +44,8 @@ class createApp(tk.Tk):
                 try:
                     with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
                         json_object = json.load(f)
+                        # This is in the event that the config does not contain
+                        configValidation.configVericaiton(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
                         f.close()
                 except IOError:
@@ -417,8 +421,9 @@ class restartCheck(tk.Frame):
             if sum(selectionDict.values())==0:
                 messagebox.showerror(title="No options selected",
                                      message="Please select at least one of the options")
+            #     To break out of the submission if the email box is selected but no email is input
             elif getEmailInputBoxValue() == '' and valueArray[0].get() == 1 :
-                print("Why am I here ")
+
                 return
             else:
                 # Appending each config file with the variables of what to do in case of failure
