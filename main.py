@@ -119,12 +119,11 @@ class VariableSelection(tk.Frame):
                 userInput = coreTempInput.get()
 
                 if userInput.isdigit():
+                    userInput = int(userInput)
                     return userInput
 
                 messagebox.showerror(title="Invalid Core Temp Input",
-                                     message="Please input a numerical Max Core Temperature")
-
-
+                                    message="Please input a numerical Max Core Temperature")
 
 
 
@@ -213,7 +212,7 @@ class VariableSelection(tk.Frame):
 
 
             commandsDict = {
-                0:lambda: None,
+                0: lambda: None,
                 1: lambda: None,
                 2: lambda: coreTempCheckVariable.get(),
                 3: lambda: gddrTempCheckboxVariable.get(),
@@ -226,11 +225,11 @@ class VariableSelection(tk.Frame):
 
             # This look checks if any check box is ticked but does not have a value in it. This also allows the error message
             #  to appear properly and not reset the users already inputted data
-            var = 0
-            for x in dict:
-                if dict[x] is None and commandsDict[var]() == 1:
+            for index, value in enumerate(dict.values()):
+                if value is None and commandsDict[index]() == 1:
                     return
-                var += 1
+
+
 
             # The break cases where the data should not be sent to further processing
             if dict["minerType"] is None:
@@ -386,10 +385,10 @@ class restartCheck(tk.Frame):
         Label(self, text='If something goes wrong with a GPU\n'
                          ' what would you like me to do?', font=('arial', 12, 'normal')).place(x=25, y=30)
         var = 0
-        for x in whatDoText:
+        for index, name in enumerate(whatDoText):
             # Generating the checkboxes
-            x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[var], variable=valueArray[var],
-                                        font=('arial', 8, 'normal'), command =commandsDict[var])
+            x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[index], variable=valueArray[index],
+                                        font=('arial', 8, 'normal'), command =commandsDict[index])
             x.place(x=xVar, y=yVar)
             var += 1
             yVar += 30
