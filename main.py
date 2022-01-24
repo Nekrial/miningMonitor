@@ -47,7 +47,7 @@ class createApp(tk.Tk):
                         # This is in the event that the config does not contain
                         configValidation.configVericaiton(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
-                        f.close()
+
                 except IOError:
                     self.switch_frame(StartPage)
 
@@ -241,8 +241,7 @@ class VariableSelection(tk.Frame):
                     with open(f"Configs/config{nextDevice[0]}.txt", "w+") as outfile:
                         outfile.write(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
-                        outfile.close()
-
+                        
                         if len(connectionAndAPI.gatherConfigs()) != connectionAndAPI.countGpus():
                             app.switch_frame(StartPage)
 
@@ -379,18 +378,17 @@ class restartCheck(tk.Frame):
             "Restart the miner",
             "Shutdown the computer"
         ]
-        xVar = 9
+
         yVar = 97
 
         Label(self, text='If something goes wrong with a GPU\n'
                          ' what would you like me to do?', font=('arial', 12, 'normal')).place(x=25, y=30)
-        var = 0
+
         for index, name in enumerate(whatDoText):
             # Generating the checkboxes
             x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[index], variable=valueArray[index],
                                         font=('arial', 8, 'normal'), command =commandsDict[index])
-            x.place(x=xVar, y=yVar)
-            var += 1
+            x.place(x=9, y=yVar)
             yVar += 30
         # This is the section of code which creates the a label
         emailInputLable = Label(self, text='What email would you like to be notified at?',
