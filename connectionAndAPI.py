@@ -13,7 +13,8 @@ from tkinter import messagebox
 
 
 class gpu:
-    def __init__(self, deviceID, minerType, email, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash):
+    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail = 1,
+                 restartMiner = 0, shutdownSequence = 0, email=None):
         self.deviceID = deviceID
         self.minerType = minerType
         self.email = email
@@ -23,6 +24,9 @@ class gpu:
         self.hotSpot = hotSpot
         self.maxHash = maxHash
         self.minHash = minHash
+        self.sendEmail = sendEmail
+        self.restartMiner = restartMiner
+        self.shutdownSequence = shutdownSequence
         self.knownPort = queryKnownPorts()
 
     def checkCoreTemp(self):

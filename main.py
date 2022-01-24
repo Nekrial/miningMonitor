@@ -106,26 +106,24 @@ class VariableSelection(tk.Frame):
         minHashrateCheckboxVar = tk.IntVar(value=0)
 
         # Getters
-        def getEmailInputBoxValue():
-            userInput = emailInputBox.get()
-            if userInput == '':
-                messagebox.showerror(title="Invalid Email Input",
-                                     message="Please input a email so that we can notify you when an error occurs.")
-            else:
-                return userInput
+
 
         # this is a function to get the user input from the text input box
         def getCoreTempInputBoxValue():
-            userInput = coreTempInput.get()
+
             if coreTempInput.cget('state') == "normal":
+                userInput = coreTempInput.get()
+
                 try:
                     userInput = int(userInput)
                     return userInput
-                except:
+                except ValueError:
                     messagebox.showerror(title="Invalid Core Temp Input",
                                          message="Please input a numerical Max Core Temperature")
-            else:
-                return
+
+
+
+
 
         # this is a function to get the user input from the text input box
         def getGDDRInputBoxValue():
@@ -138,8 +136,7 @@ class VariableSelection(tk.Frame):
                 except:
                     messagebox.showerror(title="Invalid Memory Temp Input",
                                          message="Please input a numerical Max GDDR6X Temperature")
-            else:
-                return
+
 
         # this is a function to get the user input from the text input box
         def getPowerInputBoxValue():
@@ -151,8 +148,7 @@ class VariableSelection(tk.Frame):
                 except:
                     messagebox.showerror(title="Invalid Max Power Input",
                                          message="Please input a numerical Max Power in Watts")
-            else:
-                return
+
 
         # this is a function to get the user input from the text input box
         def getHotSpotInputBoxValue():
@@ -164,8 +160,7 @@ class VariableSelection(tk.Frame):
                 except:
                     messagebox.showerror(title="Invalid Hot Spot Temp Input",
                                          message="Please input a numerical Max Hot Spot Temperature")
-            else:
-                return
+
 
         def getMaxHashrateInputBoxValue():
             userInput = maxHashrateInput.get()
@@ -177,8 +172,7 @@ class VariableSelection(tk.Frame):
                 except:
                     messagebox.showerror(title="Invalid Max Hashrate",
                                          message="Please input a numerical max hashrate")
-            else:
-                return
+
 
         def getMinHashrateInputBoxValue():
             userInput = minHashrateInput.get()
@@ -189,8 +183,7 @@ class VariableSelection(tk.Frame):
                 except:
                     messagebox.showerror(title="Invalid Min Hashrate",
                                          message="Please input a numerical minimum hashrate")
-            else:
-                return
+
 
         def getAllAndCheck():
 
@@ -199,8 +192,6 @@ class VariableSelection(tk.Frame):
             dict = {"deviceID": nextDevice[0],
 
                     "minerType": app.minerType,
-
-                    "email": getEmailInputBoxValue(),
 
                     "coreTemp": getCoreTempInputBoxValue(),
 
@@ -213,16 +204,36 @@ class VariableSelection(tk.Frame):
                     "maxHash": getMaxHashrateInputBoxValue(),
 
                     "minHash": getMinHashrateInputBoxValue(),
-
-
-
                     }
+
+
+            commandsDict = {
+                0:lambda: None,
+                1: lambda: None,
+                2: lambda: coreTempCheckVariable.get(),
+                3: lambda: gddrTempCheckboxVariable.get(),
+                4: lambda: gpuPowerCheckboxVar.get(),
+                5: lambda: hotSpotTempCheckboxVar.get(),
+                6: lambda: maxHashrateCheckboxVar.get(),
+                7: lambda: minHashrateCheckboxVar.get(),
+            }
             json_object = json.dumps(dict)
+
+            # This look checks if any check box is ticked but does not have a value in it. This also allows the error message
+            #  to appear properly and not reset the users already inputted data
+            var = 0
+            for x in dict:
+                if dict[x] is None and commandsDict[var]() == 1:
+                    return
+                var += 1
+
             # The break cases where the data should not be sent to further processing
-            if dict["email"] == None or dict["minerType"] == None:
+            if dict["minerType"] is None:
+
                 return
             else:
-                if nextDevice != None:
+
+                if nextDevice is not None:
                     with open(f"Configs/config{nextDevice[0]}.txt", "w+") as outfile:
                         outfile.write(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
@@ -235,32 +246,13 @@ class VariableSelection(tk.Frame):
                             app.switch_frame(restartCheck)
                 else:
                     print("fuck")
+
         # This just clears the text from the input box when clicked
         def on_click(event):
             event.widget.delete(0, tk.END)
 
-        # Places or unplaces the input box based on the checkbox value
-        def show_entry(var, widget, incX, incY):
-
-            if var.get() == 1:
-                # Clean up line and function
-                widget.delete(0, tk.END)
-                widget.configure(state="normal")
-                widget.place(x=incX, y=incY)
-            else:
-                widget.configure(state="disabled")
-                widget.place_forget()
-
-        # This is the section of code which creates the a label
-        Label(self, text='What email would you like to be notified at?',
-              font=('arial', 10, 'normal')).place(x=15, y=12)
-
-        # This is the section of code which creates a text input box
-        emailInputBox = Entry(self, width=40)
-        emailInputBox.place(x=15, y=30)
-
         # Making the monitor label
-        Label(self, text='What would you like me to monitor?', font=('arial', 10, 'normal')).place(x=12, y=60)
+        Label(self, text='What would you like me to monitor?', font=('arial', 13, 'normal')).place(x=12, y=30)
         # core temp input and checkbox block
         coreTempInput = Entry(self, width=20, )
         coreTempInput.bind("<Button-1>", on_click)
@@ -333,11 +325,35 @@ class VariableSelection(tk.Frame):
         Button(self, text='Continue', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndCheck(
         )).place(x=101, y=300)
 
+# Places or unplaces the input box based on the checkbox value
+# Placing it out here so that multiple classes may use it
+def show_entry(var, widget, incX, incY):
+
+    if var.get() == 1:
+
+        # Clean up line and function. The if statement is to check if it is a label or a textbox as we do not want to delete text of a label
+        if type(widget)== "<class 'tkinter.Entry'>":
+            widget.delete(0, tk.END)
+        widget.configure(state="normal")
+        widget.place(x=incX, y=incY)
+    else:
+        widget.configure(state="disabled")
+        widget.place_forget()
+
+
 class restartCheck(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master, width=300, height=350)
         self.frame = tk.Frame(self)
         master.title("Final Checks")
+
+        def getEmailInputBoxValue():
+            userInput = emailInputBox.get()
+            if userInput == "" and sendEmailCheckBox.get() == 1:
+                messagebox.showerror(title="Invalid Email Input",
+                                     message="Please input a email so that we can notify you when an error occurs.")
+            else:
+                return userInput
 
         # Creating the checkbox variables
         sendEmailCheckBox = tk.IntVar(value=0)
@@ -348,6 +364,11 @@ class restartCheck(tk.Frame):
 
         valueArray= [sendEmailCheckBox,restartMinerCheckbox,shutDownComputer]
 
+        commandsDict = {
+            0: lambda:[show_entry(valueArray[0], emailInputLable,9,200),show_entry(valueArray[0], emailInputBox, 9, 230)],
+            1: None,
+            2: None
+        }
         whatDoText = [
             "Send me an email",
             "Restart the miner",
@@ -361,32 +382,46 @@ class restartCheck(tk.Frame):
         var = 0
         for x in whatDoText:
             # Generating the checkboxes
-
             x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[var], variable=valueArray[var],
-                                        font=('arial', 8, 'normal'))
+                                        font=('arial', 8, 'normal'), command = commandsDict[var])
             x.place(x=xVar, y=yVar)
             var += 1
             yVar += 30
+        # This is the section of code which creates the a label
+        emailInputLable = Label(self, text='What email would you like to be notified at?',
+              font=('arial', 10, 'normal'))
+        emailInputBox = Entry(self, width=40)
+
+        # This is the section of code which creates a text input box
+
 
         # This is the section of code which creates a button
         Button(self, text='Begin Monitoring', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndProcess(valueArray
         )).place(x=101, y=300)
+        #def show_entry(var, widget, incX, incY):
+
+
 
         def getAllAndProcess(valueArray):
             # preparing values for json integration
+
             selectionDict = {
                 'sendEmail' : valueArray[0].get(),
                 'restartMiner' : valueArray[1].get(),
                 'shutdownSequence' : valueArray[2].get()
             }
-
+            print("here")
 
             # The break case if everything is null and nothing is selected
             if sum(selectionDict.values())==0:
                 messagebox.showerror(title="No options selected",
                                      message="Please select at least one of the options")
+            elif getEmailInputBoxValue() == '' and valueArray[0].get() == 1 :
+                messagebox.showerror(title="No email address  selected",
+                                     message="Please input an email address")
             else:
                 # Appending each config file with the variables of what to do in case of failure
+                selectionDict["email"] = getEmailInputBoxValue()
                 for x in range(connectionAndAPI.countGpus()):
                     with open(f"Configs/config{x}.txt",'r+') as openFile:
                         data = json.load(openFile)
@@ -394,6 +429,7 @@ class restartCheck(tk.Frame):
                         openFile.seek(0)
                         json.dump(data,openFile)
                         openFile.close()
+                master.switch_frame(monitoringFrame)
 
 
 
