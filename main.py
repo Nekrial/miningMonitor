@@ -353,6 +353,7 @@ class restartCheck(tk.Frame):
             if userInput == "" and sendEmailCheckBox.get() == 1:
                 messagebox.showerror(title="Invalid Email Input",
                                      message="Please input a email so that we can notify you when an error occurs.")
+                return ""
             else:
                 return userInput
 
@@ -384,7 +385,7 @@ class restartCheck(tk.Frame):
         for x in whatDoText:
             # Generating the checkboxes
             x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[var], variable=valueArray[var],
-                                        font=('arial', 8, 'normal'), command = commandsDict[var])
+                                        font=('arial', 8, 'normal'), command =commandsDict[var])
             x.place(x=xVar, y=yVar)
             var += 1
             yVar += 30
@@ -411,15 +412,14 @@ class restartCheck(tk.Frame):
                 'restartMiner' : valueArray[1].get(),
                 'shutdownSequence' : valueArray[2].get()
             }
-            print("here")
 
             # The break case if everything is null and nothing is selected
             if sum(selectionDict.values())==0:
                 messagebox.showerror(title="No options selected",
                                      message="Please select at least one of the options")
             elif getEmailInputBoxValue() == '' and valueArray[0].get() == 1 :
-                messagebox.showerror(title="No email address  selected",
-                                     message="Please input an email address")
+                print("Why am I here ")
+                return
             else:
                 # Appending each config file with the variables of what to do in case of failure
                 selectionDict["email"] = getEmailInputBoxValue()
