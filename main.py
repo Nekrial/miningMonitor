@@ -236,14 +236,14 @@ class VariableSelection(tk.Frame):
         def on_click(event):
             event.widget.delete(0, tk.END)
 
-        def show_entry(var, widget):
+        def show_entry(var, widget, incX, incY):
 
-            if var.get() == 0:
+            if var.get() == 1:
                 # Clean up line and function
                 widget.delete(0, tk.END)
-                widget.configure(state="disabled")
+                widget.place(x=incX, y=incY)
             else:
-                widget.configure(state="normal")
+                widget.place_forget()
 
         # This is the section of code which creates the a label
         Label(self, text='What email would you like to be notified at?',
@@ -257,13 +257,11 @@ class VariableSelection(tk.Frame):
         Label(self, text='What would you like me to monitor?', font=('arial', 10, 'normal')).place(x=12, y=60)
         # core temp input and checkbox block
         coreTempInput = Entry(self, width=20, )
-        coreTempInput.place(x=103, y=100)
         coreTempInput.bind("<Button-1>", on_click)
-        coreTempInput.configure(state="disabled")
 
         CoreTempCheck = Checkbutton(self, onvalue=1, offvalue=0, text='Core Temp', variable=coreTempCheckVariable,
                                     font=('arial', 8, 'normal'),
-                                    command=lambda: [show_entry(coreTempCheckVariable, coreTempInput),
+                                    command=lambda: [show_entry(coreTempCheckVariable, coreTempInput, 103 ,100),
                                                      coreTempInput.insert(tk.END, "Enter Max Core Temp")
                                                      ])
         CoreTempCheck.place(x=9, y=97)
@@ -271,63 +269,53 @@ class VariableSelection(tk.Frame):
 
         # Gddr6x input block
         gddrInput = Entry(self, width=20)
-        gddrInput.place(x=121, y=134)
         gddrInput.bind("<Button-1>", on_click)
-        gddrInput.configure(state="disabled")
 
         # This is the section of code which creates a checkbox
         gddrTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='GDDR6X Temp',
                                        variable=gddrTempCheckboxVariable,
-                                       command=lambda: [show_entry(gddrTempCheckboxVariable, gddrInput),
+                                       command=lambda: [show_entry(gddrTempCheckboxVariable, gddrInput, 121, 134),
                                                         gddrInput.insert(tk.END, "Enter Max Memory Temp")])
         gddrTempCheckbox.place(x=9, y=131)
         # end gddr block
 
         # Power input block
         gpuPowerInput = Entry(self, width=21)
-        gpuPowerInput.place(x=134, y=170)
         gpuPowerInput.bind("<Button-1>", on_click)
-        gpuPowerInput.configure(state="disabled")
 
         gpuPowerCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Gpu Power Draw', variable=gpuPowerCheckboxVar,
-                                       command=lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput),
+                                       command=lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput,134, 170),
                                                         gpuPowerInput.insert(tk.END, "Enter Max Power(Watts)")])
         gpuPowerCheckbox.place(x=9, y=167)
         # End gpu power input block
 
         # hotspot block
         hotSpotTempInput = Entry(self, width=20)
-        hotSpotTempInput.place(x=126, y=201)
         hotSpotTempInput.bind("<Button-1>", on_click)
-        hotSpotTempInput.configure(state="disabled")
 
         hotSpotTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Hot Spot Temp',
                                           variable=hotSpotTempCheckboxVar,
-                                          command=lambda: [show_entry(hotSpotTempCheckboxVar, hotSpotTempInput),
+                                          command=lambda: [show_entry(hotSpotTempCheckboxVar, hotSpotTempInput, 126, 201),
                                                            hotSpotTempInput.insert(tk.END, "Enter Max Hot Spot")])
         hotSpotTempCheckbox.place(x=9, y=198)
 
         # Max Hashrate block
         maxHashrateInput = Entry(self, width=20)
-        maxHashrateInput.place(x=126, y=230)
         maxHashrateInput.bind("<Button-1>", on_click)
-        maxHashrateInput.configure(state="disabled")
 
         maxHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Max Hashrate',
                                           variable=maxHashrateCheckboxVar,
-                                          command=lambda: [show_entry(maxHashrateCheckboxVar, maxHashrateInput),
+                                          command=lambda: [show_entry(maxHashrateCheckboxVar, maxHashrateInput,126, 230),
                                                            maxHashrateInput.insert(tk.END, "Enter Max Hashrate")])
         maxHashrateCheckbox.place(x=9, y=227)
 
         # Min Hashrate block
         minHashrateInput = Entry(self, width=25)
-        minHashrateInput.place(x=140, y=260)
         minHashrateInput.bind("<Button-1>", on_click)
-        minHashrateInput.configure(state="disabled")
 
         minHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Minimum Hashrate',
                                           variable=minHashrateCheckboxVar,
-                                          command=lambda: [show_entry(minHashrateCheckboxVar, minHashrateInput),
+                                          command=lambda: [show_entry(minHashrateCheckboxVar, minHashrateInput, 140, 260),
                                                            minHashrateInput.insert(tk.END, "Enter Min Hashrate")])
         minHashrateCheckbox.place(x=9, y=257)
 
