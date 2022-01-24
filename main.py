@@ -364,7 +364,7 @@ class monitoringFrame(tk.Frame):
                     gpu.checkMaxPower()
                     gpu.checkCoreTemp()
                     gpu.checkMemTemp()
-        except:
+        except Exception as e:
             button1.pack_forget()
             label1.pack_forget()
             tk.Label(self,
@@ -380,6 +380,6 @@ class monitoringFrame(tk.Frame):
 
 if __name__ == "__main__":
     app = createApp()
-    
+
 
     app.mainloop()

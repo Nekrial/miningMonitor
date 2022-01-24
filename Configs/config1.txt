@@ -1,0 +1,1 @@
+{"deviceID": 1, "minerType": "Excavator", "email": "ds", "coreTemp": null, "memTemp": null, "powerMax": null, "hotSpot": null, "maxHash": null, "minHash": null}

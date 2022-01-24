@@ -23,6 +23,7 @@ class gpu:
         self.hotSpot = hotSpot
         self.maxHash = maxHash
         self.minHash = minHash
+        self.knownPort = queryKnownPorts()
 
     def checkCoreTemp(self):
         gpu = get_phys_gpu(self.deviceID)
@@ -32,40 +33,41 @@ class gpu:
             emailCheck = self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                                           f"The max temp you set me to monitor was {self.coreTemp}")
 
-        return emailCheck
+            return emailCheck
 
     def checkMaxPower(self):
         gpu = get_phys_gpu(self.deviceID)
         currentPower = gpu.power
 
         if currentPower >= self.coreTemp:
+
             emailCheck = self.notifyEmail(
                 f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
                 f"The max power draw you set me to monitor was {self.powerMax}")
 
-        return emailCheck
+            return emailCheck
 
     def hotSpotTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.hotspot_temp
 
         if currentTemp >= self.hotSpotTemp():
+
             emailCheck = self.notifyEmail(
                 f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                 f"The max how spot temp set me to monitor was {self.hotSpot}")
-
-        return emailCheck
+            return emailCheck
 
     def checkMemTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.vram_temp
 
-        if currentTemp >= self.memTemp:
+        if currentTemp != None and currentTemp >= self.memTemp:
             emailCheck = self.notifyEmail(
                 f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                 f"The max memory temp you set me to monitor was {self.memTemp}")
 
-        return emailCheck
+            return emailCheck
 
     def checkMaxHash(self):
         workerInformation = requests.get(
@@ -74,11 +76,10 @@ class gpu:
 
         currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
 
-        if currentSpeed >= self.maxHash:
+        if int(str(currentSpeed)[:2]) > self.maxHash:
             emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
-                                          f"The min hashrate you set me to monitor was {self.maxHash}")
-
-        return emailCheck
+                                          f"The max hashrate you set me to monitor was {self.maxHash}")
+            return emailCheck
 
     def checkMinHash(self):
         workerInformation = requests.get(
@@ -86,15 +87,13 @@ class gpu:
         workerInformation = workerInformation.json()
 
         currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
-
-        if currentSpeed <= self.maxHash:
+        if int(str(currentSpeed)[:2]) <= self.minHash:
             emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                                           f"The min hashrate you set me to monitor was {self.minHash}")
 
-        return emailCheck
+            return emailCheck
 
     def notifyEmail(self, whatBroke):
-
         port = 465  # For SSL
         smtp_server = "smtp.gmail.com"
         sender_email = "miningmonitoremail@gmail.com"  # Enter your address
@@ -181,7 +180,6 @@ def currentDeviceWithoutConfig():
 
 def gatherConfigs():
     kappa = testGpuConnection()
-    print(kappa)
     configList = []
     for x in kappa:
         try:
