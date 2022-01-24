@@ -163,7 +163,7 @@ def testGpuConnection():
     except ConnectionError:
         return
 
-# Todo update this to not use the api and instead of pynvraw
+
 def countGpus():
     return len(get_gpus())
 
