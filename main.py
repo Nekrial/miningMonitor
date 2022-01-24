@@ -26,7 +26,6 @@ class createApp(tk.Tk):
 
 
         kappa = connectionAndAPI.testGpuConnection()
-        connectionAndAPI.gatherConfigs()
         if kappa == "testGPUConnection Error":
             tk.Label(self,
                      text="I cannot connect to any NVIDIA GPUs. Please start the miner before you start this monitoring program\n "
@@ -183,13 +182,11 @@ class VariableSelection(tk.Frame):
 
         def getMinHashrateInputBoxValue():
             userInput = minHashrateInput.get()
-
             if minHashrateInput.cget('state') == "normal":
                 try:
                     userInput = int(userInput)
                     return userInput
-                except Exception as e:
-                    print(e)
+                except:
                     messagebox.showerror(title="Invalid Min Hashrate",
                                          message="Please input a numerical minimum hashrate")
             else:
@@ -232,17 +229,17 @@ class VariableSelection(tk.Frame):
                         outfile.close()
 
                         if len(connectionAndAPI.gatherConfigs()) != connectionAndAPI.countGpus():
-
                             app.switch_frame(StartPage)
+
                         else:
-                            print("Here")
                             app.switch_frame(restartCheck)
                 else:
                     print("fuck")
-
+        # This just clears the text from the input box when clicked
         def on_click(event):
             event.widget.delete(0, tk.END)
 
+        # Places or unplaces the input box based on the checkbox value
         def show_entry(var, widget, incX, incY):
 
             if var.get() == 1:
@@ -333,16 +330,77 @@ class VariableSelection(tk.Frame):
         minHashrateCheckbox.place(x=9, y=257)
 
         # This is the section of code which creates a button
-        Button(self, text='Begin Monitoring', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndCheck(
+        Button(self, text='Continue', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndCheck(
         )).place(x=101, y=300)
 
 class restartCheck(tk.Frame):
     def __init__(self, master):
-        global gpuList
         tk.Frame.__init__(self, master, width=300, height=350)
         self.frame = tk.Frame(self)
         master.title("Final Checks")
-        Label(self, text='If something goes wrong with a GPU what would you like me to do?', font=('arial', 10, 'normal')).place(x=12, y=60)
+
+        # Creating the checkbox variables
+        sendEmailCheckBox = tk.IntVar(value=0)
+
+        restartMinerCheckbox = tk.IntVar(value=0)
+
+        shutDownComputer = tk.IntVar(value=0)
+
+        valueArray= [sendEmailCheckBox,restartMinerCheckbox,shutDownComputer]
+
+        whatDoText = [
+            "Send me an email",
+            "Restart the miner",
+            "Shutdown the computer"
+        ]
+        xVar = 9
+        yVar = 97
+
+        Label(self, text='If something goes wrong with a GPU\n'
+                         ' what would you like me to do?', font=('arial', 12, 'normal')).place(x=25, y=30)
+        var = 0
+        for x in whatDoText:
+            # Generating the checkboxes
+
+            x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[var], variable=valueArray[var],
+                                        font=('arial', 8, 'normal'))
+            x.place(x=xVar, y=yVar)
+            var += 1
+            yVar += 30
+
+        # This is the section of code which creates a button
+        Button(self, text='Begin Monitoring', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndProcess(valueArray
+        )).place(x=101, y=300)
+
+        def getAllAndProcess(valueArray):
+            # preparing values for json integration
+            selectionDict = {
+                'sendEmail' : valueArray[0].get(),
+                'restartMiner' : valueArray[1].get(),
+                'shutdownSequence' : valueArray[2].get()
+            }
+
+
+            # The break case if everything is null and nothing is selected
+            if sum(selectionDict.values())==0:
+                messagebox.showerror(title="No options selected",
+                                     message="Please select at least one of the options")
+            else:
+                # Appending each config file with the variables of what to do in case of failure
+                for x in range(connectionAndAPI.countGpus()):
+                    with open(f"Configs/config{x}.txt",'r+') as openFile:
+                        data = json.load(openFile)
+                        data.update(selectionDict)
+                        openFile.seek(0)
+                        json.dump(data,openFile)
+                        openFile.close()
+
+
+
+
+
+
+
 
 
 
@@ -387,6 +445,9 @@ class monitoringFrame(tk.Frame):
             tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
 
         self.after(5000,lambda: master.switch_frame(monitoringFrame))
+
+
+
 
 
 
