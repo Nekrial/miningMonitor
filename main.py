@@ -114,12 +114,11 @@ class VariableSelection(tk.Frame):
             if coreTempInput.cget('state') == "normal":
                 userInput = coreTempInput.get()
 
-                try:
-                    userInput = int(userInput)
+                if userInput.isdigit():
                     return userInput
-                except ValueError:
-                    messagebox.showerror(title="Invalid Core Temp Input",
-                                         message="Please input a numerical Max Core Temperature")
+
+                messagebox.showerror(title="Invalid Core Temp Input",
+                                     message="Please input a numerical Max Core Temperature")
 
 
 
@@ -130,59 +129,61 @@ class VariableSelection(tk.Frame):
 
             userInput = gddrInput.get()
             if gddrInput.cget('state') == "normal":
-                try:
+
+                if userInput.isdigit():
                     userInput = int(userInput)
                     return userInput
-                except:
-                    messagebox.showerror(title="Invalid Memory Temp Input",
-                                         message="Please input a numerical Max GDDR6X Temperature")
+
+                messagebox.showerror(title="Invalid Memory Temp Input",
+                                     message="Please input a numerical Max GDDR6X Temperature")
 
 
         # this is a function to get the user input from the text input box
         def getPowerInputBoxValue():
             userInput = gpuPowerInput.get()
             if gpuPowerInput.cget('state') == "normal":
-                try:
+
+                if userInput.isdigit():
                     userInput = int(userInput)
                     return userInput
-                except:
-                    messagebox.showerror(title="Invalid Max Power Input",
-                                         message="Please input a numerical Max Power in Watts")
+
+                messagebox.showerror(title="Invalid Max Power Input",
+                                     message="Please input a numerical Max Power in Watts")
 
 
         # this is a function to get the user input from the text input box
         def getHotSpotInputBoxValue():
             userInput = hotSpotTempInput.get()
             if hotSpotTempInput.cget('state') == "normal":
-                try:
+                if userInput.isdigit():
                     userInput = int(userInput)
                     return userInput
-                except:
-                    messagebox.showerror(title="Invalid Hot Spot Temp Input",
-                                         message="Please input a numerical Max Hot Spot Temperature")
+
+                messagebox.showerror(title="Invalid Hot Spot Temp Input",
+                                     message="Please input a numerical Max Hot Spot Temperature")
 
 
         def getMaxHashrateInputBoxValue():
             userInput = maxHashrateInput.get()
 
             if maxHashrateInput.cget('state') == "normal":
-                try:
+                if userInput.isdigit():
                     userInput = int(userInput)
                     return userInput
-                except:
-                    messagebox.showerror(title="Invalid Max Hashrate",
-                                         message="Please input a numerical max hashrate")
+
+                messagebox.showerror(title="Invalid Max Hashrate",
+                                     message="Please input a numerical max hashrate")
 
 
         def getMinHashrateInputBoxValue():
             userInput = minHashrateInput.get()
             if minHashrateInput.cget('state') == "normal":
-                try:
+                if userInput.isdigit():
                     userInput = int(userInput)
                     return userInput
-                except:
-                    messagebox.showerror(title="Invalid Min Hashrate",
-                                         message="Please input a numerical minimum hashrate")
+
+                messagebox.showerror(title="Invalid Min Hashrate",
+                                     message="Please input a numerical minimum hashrate")
 
 
         def getAllAndCheck():
