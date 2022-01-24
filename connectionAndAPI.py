@@ -184,15 +184,19 @@ def currentDeviceWithoutConfig():
 
 def gatherConfigs():
     kappa = testGpuConnection()
-    configList = []
+    configList = {}
+    var = 0
     for x in kappa:
         try:
             with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
-                configList.append(f"Configs/config{x['device_id']}.txt")
+                configList[x['device_id']] = f"Configs/config{x['device_id']}.txt"
                 f.close()
         except IOError:
             continue
-    return (configList)
+
+
+    return configList
+
 
 
 def is_HTTP_server_running(host, port, just_GAE_devserver=False):

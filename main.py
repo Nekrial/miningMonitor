@@ -49,7 +49,10 @@ class createApp(tk.Tk):
                     self.switch_frame(StartPage)
 
         if len(gpuList) == len(testGpuConnection()):
-         self.switch_frame(monitoringFrame)
+            self.switch_frame(monitoringFrame)
+
+
+
 
 
 
@@ -185,7 +188,8 @@ class VariableSelection(tk.Frame):
                 try:
                     userInput = int(userInput)
                     return userInput
-                except:
+                except Exception as e:
+                    print(e)
                     messagebox.showerror(title="Invalid Min Hashrate",
                                          message="Please input a numerical minimum hashrate")
             else:
@@ -226,10 +230,13 @@ class VariableSelection(tk.Frame):
                         outfile.write(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
                         outfile.close()
-                        if len(gpuList) != connectionAndAPI.countGpus():
+
+                        if len(connectionAndAPI.gatherConfigs()) != connectionAndAPI.countGpus():
+
                             app.switch_frame(StartPage)
                         else:
-                            app.switch_frame(monitoringFrame)
+                            print("Here")
+                            app.switch_frame(restartCheck)
                 else:
                     print("fuck")
 
@@ -241,8 +248,10 @@ class VariableSelection(tk.Frame):
             if var.get() == 1:
                 # Clean up line and function
                 widget.delete(0, tk.END)
+                widget.configure(state="normal")
                 widget.place(x=incX, y=incY)
             else:
+                widget.configure(state="disabled")
                 widget.place_forget()
 
         # This is the section of code which creates the a label
@@ -258,6 +267,7 @@ class VariableSelection(tk.Frame):
         # core temp input and checkbox block
         coreTempInput = Entry(self, width=20, )
         coreTempInput.bind("<Button-1>", on_click)
+        coreTempInput.configure(state="disabled")
 
         CoreTempCheck = Checkbutton(self, onvalue=1, offvalue=0, text='Core Temp', variable=coreTempCheckVariable,
                                     font=('arial', 8, 'normal'),
@@ -270,7 +280,7 @@ class VariableSelection(tk.Frame):
         # Gddr6x input block
         gddrInput = Entry(self, width=20)
         gddrInput.bind("<Button-1>", on_click)
-
+        gddrInput.configure(state="disabled")
         # This is the section of code which creates a checkbox
         gddrTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='GDDR6X Temp',
                                        variable=gddrTempCheckboxVariable,
@@ -282,7 +292,7 @@ class VariableSelection(tk.Frame):
         # Power input block
         gpuPowerInput = Entry(self, width=21)
         gpuPowerInput.bind("<Button-1>", on_click)
-
+        gpuPowerInput.configure(state="disabled")
         gpuPowerCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Gpu Power Draw', variable=gpuPowerCheckboxVar,
                                        command=lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput,134, 170),
                                                         gpuPowerInput.insert(tk.END, "Enter Max Power(Watts)")])
@@ -292,6 +302,7 @@ class VariableSelection(tk.Frame):
         # hotspot block
         hotSpotTempInput = Entry(self, width=20)
         hotSpotTempInput.bind("<Button-1>", on_click)
+        hotSpotTempInput.configure(state="disabled")
 
         hotSpotTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Hot Spot Temp',
                                           variable=hotSpotTempCheckboxVar,
@@ -302,6 +313,7 @@ class VariableSelection(tk.Frame):
         # Max Hashrate block
         maxHashrateInput = Entry(self, width=20)
         maxHashrateInput.bind("<Button-1>", on_click)
+        maxHashrateInput.configure(state="disabled")
 
         maxHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Max Hashrate',
                                           variable=maxHashrateCheckboxVar,
@@ -312,6 +324,7 @@ class VariableSelection(tk.Frame):
         # Min Hashrate block
         minHashrateInput = Entry(self, width=25)
         minHashrateInput.bind("<Button-1>", on_click)
+        minHashrateInput.configure(state="disabled")
 
         minHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Minimum Hashrate',
                                           variable=minHashrateCheckboxVar,
@@ -322,6 +335,15 @@ class VariableSelection(tk.Frame):
         # This is the section of code which creates a button
         Button(self, text='Begin Monitoring', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndCheck(
         )).place(x=101, y=300)
+
+class restartCheck(tk.Frame):
+    def __init__(self, master):
+        global gpuList
+        tk.Frame.__init__(self, master, width=300, height=350)
+        self.frame = tk.Frame(self)
+        master.title("Final Checks")
+        Label(self, text='If something goes wrong with a GPU what would you like me to do?', font=('arial', 10, 'normal')).place(x=12, y=60)
+
 
 
 class monitoringFrame(tk.Frame):
@@ -355,7 +377,7 @@ class monitoringFrame(tk.Frame):
                     gpu.checkMaxPower()
                     gpu.checkCoreTemp()
                     gpu.checkMemTemp()
-        except Exception as e:
+        except:
             button1.pack_forget()
             label1.pack_forget()
             tk.Label(self,
