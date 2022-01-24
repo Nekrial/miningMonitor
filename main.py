@@ -35,8 +35,11 @@ class createApp(tk.Tk):
                 fill="x", pady=10)
             tk.Button(self, text="Reset Profiles and restart program", command=lambda:resetAll(1)).pack()
         else:
+            # Quick os call to make the configs directory if it does not already exist
+            if not os.path.exists('Configs'):
+                os.mkdir('Configs')
+                # Main loop for reading configs
             for x in kappa:
-
                 try:
                     with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
                         json_object = json.load(f)

@@ -31,7 +31,8 @@ class gpu:
 
         if currentTemp >= self.coreTemp:
             emailCheck = self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                                          f"The max temp you set me to monitor was {self.coreTemp}")
+                                          f"The max temp you set me to monitor was {self.coreTemp}\n"
+                                          f"The device model is {gpu.name}")
 
             return emailCheck
 
@@ -43,7 +44,8 @@ class gpu:
 
             emailCheck = self.notifyEmail(
                 f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
-                f"The max power draw you set me to monitor was {self.powerMax}")
+                f"The max power draw you set me to monitor was {self.powerMax}\n"
+                f"The device model is {gpu.name}")
 
             return emailCheck
 
@@ -55,7 +57,8 @@ class gpu:
 
             emailCheck = self.notifyEmail(
                 f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                f"The max how spot temp set me to monitor was {self.hotSpot}")
+                f"The max how spot temp set me to monitor was {self.hotSpot}\n"
+                f"The device model is {gpu.name}")
             return emailCheck
 
     def checkMemTemp(self):
@@ -65,7 +68,8 @@ class gpu:
         if currentTemp != None and currentTemp >= self.memTemp:
             emailCheck = self.notifyEmail(
                 f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                f"The max memory temp you set me to monitor was {self.memTemp}")
+                f"The max memory temp you set me to monitor was {self.memTemp}\n"
+                f"The device model is {gpu.name}")
 
             return emailCheck
 
