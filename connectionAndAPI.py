@@ -31,7 +31,7 @@ class gpu:
         self.sendEmail = sendEmail
         self.restartMiner = restartMiner
         self.shutdownSequence = shutdownSequence
-        self.knownPort = queryKnownPorts()
+
 
     def limitExceeded(self, emailPreset):
         # This list will grow as we add more supported miners
@@ -166,7 +166,8 @@ class gpu:
 
 
 def getCurrentHashrate(currentMiner, deviceID):
-    if currentMiner == "Excavator":
+    
+    if currentMiner == "Excavator" and is_HTTP_server_running('localhost', '4000'):
         workerInformation = requests.get(
             'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
         workerInformation = workerInformation.json()
@@ -175,7 +176,7 @@ def getCurrentHashrate(currentMiner, deviceID):
 
         return currentSpeed
 
-    elif currentMiner == "QuickMiner":
+    elif currentMiner == "QuickMiner" and is_HTTP_server_running('localhost', '18000'):
         workerInformation = requests.get(
             'http://localhost:18000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
         workerInformation = workerInformation.json()
@@ -184,15 +185,6 @@ def getCurrentHashrate(currentMiner, deviceID):
 
         return currentSpeed
 
-
-def queryKnownPorts():
-    # Pinging the Excavator default port
-    if is_HTTP_server_running('localhost', '4000'):
-        return 'http://localhost:4000/api?command={"id":1,"method":"device.list","params":[]}'
-
-    # Pinging the quickminer port
-    if is_HTTP_server_running('localhost', '18000'):
-        return 'http://localhost:18000/api?command={"id":1,"method":"device.list","params":[]}'
 
 # TODO break this shit and make it not use miner info
 def testGpuConnection():

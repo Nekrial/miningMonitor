@@ -469,7 +469,7 @@ class monitoringFrame(tk.Frame):
         # TODO I do not like this exception loop. Its too vague and I did get some random api error on one run attempt
         try:
             for graphicsCard in gpuList:
-                graphicsCard.checkMaxHash() 
+                graphicsCard.checkMaxHash()
                 graphicsCard.checkMinHash()
                 graphicsCard.checkMaxPower()
                 graphicsCard.checkCoreTemp()
