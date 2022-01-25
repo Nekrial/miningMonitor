@@ -23,8 +23,13 @@ class createApp(tk.Tk):
         self._frame = None
         def resetAll(incQuit):
             dir = 'Configs'
+            # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
+            isEmptyCheck = (os.listdir(dir))
+            if len(isEmptyCheck) == 0:
+                quit()
             for f in os.listdir(dir):
                 os.remove(os.path.join(dir, f))
+            quit()
 
 
         kappa = connectionAndAPI.testGpuConnection()
@@ -45,9 +50,11 @@ class createApp(tk.Tk):
                     with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
                         json_object = json.load(f)
                         # This is in the event that the config does not contain
-                        configValidation.configVericaiton(json_object)
-                        gpuList.append(connectionAndAPI.gpu.from_json(json_object))
-
+                        if configValidation.configVericaiton(json_object):
+                            gpuList.append(connectionAndAPI.gpu.from_json(json_object))
+                #     Todo add a more indepth test for config validation that does not reset the file completely
+                    os.remove(f"Configs/config{x['device_id']}.txt")
+                    self.switch_frame(StartPage)
                 except IOError:
                     self.switch_frame(StartPage)
 
@@ -451,8 +458,14 @@ class monitoringFrame(tk.Frame):
         master.title("Monitoring Station")
         def resetAll():
             dir = 'Configs'
+            # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
+            isEmptyCheck = (os.listdir(dir))
+            if len(isEmptyCheck) == 0:
+                master.switch_frame(StartPage)
             for f in os.listdir(dir):
+                print("here")
                 os.remove(os.path.join(dir, f))
+
                 master.switch_frame(StartPage)
         if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
             tk.Label(self,
@@ -474,6 +487,7 @@ class monitoringFrame(tk.Frame):
                     gpu.checkMaxPower()
                     gpu.checkCoreTemp()
                     gpu.checkMemTemp()
+
         except:
             button1.pack_forget()
             label1.pack_forget()
