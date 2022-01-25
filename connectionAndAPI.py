@@ -13,6 +13,7 @@ from tkinter import messagebox
 import signal
 import psutil
 import os
+import subprocess
 
 
 class gpu:
@@ -39,17 +40,23 @@ class gpu:
             "QuickMiner": "excavator.exe"
         }
         # Checking to see which of the protocols they are set to execute
-        if self.sendEmail == 1:
-            self.notifyEmail(emailPreset, timeout=1)
+        # This try block is to soley test the user inputted email and make exception parsing easier higher up in main
+        try:
+            if self.sendEmail == 1:
+                self.notifyEmail(emailPreset)
+        except smtplib.SMTPRecipientsRefused:
+            return "Email Connection Issue"
 
         if self.restartMiner == 1:
             for proc in psutil.process_iter():
                 # check whether the process name matches. Possible exceptions
                 if proc.name() == supportedMinerProcessDict[self.minerType]:
                     proc.kill()
-
+                    return "Miner kill attempted"
+        # Not going to lie, I haven't tested this shutdown feature and I am just hoping it works. I don't want to restart
         if self.shutdownSequence == 1:
             os.system("shutdown /s /t 1")
+            return "Shutdown Failed"
 
     def checkCoreTemp(self):
         gpu = get_phys_gpu(self.deviceID)
@@ -59,7 +66,7 @@ class gpu:
             emailPreset = (f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                            f"The max temp you set me to monitor was {self.coreTemp}\n"
                            f"The device model is {gpu.name}")
-            self.limitExceeded(emailPreset)
+            return self.limitExceeded(emailPreset)
 
     def checkMaxPower(self):
         gpu = get_phys_gpu(self.deviceID)
@@ -71,7 +78,7 @@ class gpu:
                 f"The max power draw you set me to monitor was {self.powerMax}\n"
                 f"The device model is {gpu.name}")
 
-            self.limitExceeded(emailPreset)
+            return self.limitExceeded(emailPreset)
 
     def hotSpotTemp(self):
         gpu = get_phys_gpu(self.deviceID)
@@ -83,7 +90,7 @@ class gpu:
                 f"The max how spot temp set me to monitor was {self.hotSpot}\n"
                 f"The device model is {gpu.name}")
 
-            self.limitExceeded(emailPreset)
+            return self.limitExceeded(emailPreset)
 
     def checkMemTemp(self):
         gpu = get_phys_gpu(self.deviceID)
@@ -95,23 +102,26 @@ class gpu:
                 f"The max memory temp you set me to monitor was {self.memTemp}\n"
                 f"The device model is {gpu.name}")
 
-            self.limitExceeded(emailPreset)
+            return self.limitExceeded(emailPreset)
 
     def checkMaxHash(self):
-        currentSpeed = getCurrentHashrate(self.minerType,self.deviceID)
+        currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
 
         if int(str(currentSpeed)[:2]) > self.maxHash:
-            emailPreset = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
-                                          f"The max hashrate you set me to monitor was {self.maxHash}")
-            self.limitExceeded(emailPreset)
+            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                           f"The max hashrate you set me to monitor was {self.maxHash}")
+            return self.limitExceeded(emailPreset)
 
     def checkMinHash(self):
-        currentSpeed = getCurrentHashrate(self.minerType,self.deviceID)
+        try:
+            currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
 
-        if int(str(currentSpeed)[:2]) <= self.minHash:
-            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
-                                          f"The min hashrate you set me to monitor was {self.minHash}")
-            self.limitExceeded(emailPreset)
+            if int(str(currentSpeed)[:2]) <= self.minHash:
+                emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                               f"The min hashrate you set me to monitor was {self.minHash}")
+                return self.limitExceeded(emailPreset)
+        except:
+            print("hjey")
 
     def notifyEmail(self, whatBroke):
         port = 465  # For SSL
@@ -120,13 +130,11 @@ class gpu:
         receiver_email = self.email  # Enter receiver address
         password = config.emailPassword
         message = whatBroke
-        try:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-                server.login(sender_email, password)
-                server.sendmail(sender_email, receiver_email, message)
-        except smtplib.SMTPRecipientsRefused:
-            raise Exception("Please reset the profiles and add a valid email")
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message)
 
     @classmethod
     def from_json(cls, json_string):
@@ -159,7 +167,6 @@ class gpu:
 
 
 def getCurrentHashrate(currentMiner, deviceID):
-
     if currentMiner == "Excavator":
         workerInformation = requests.get(
             'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
@@ -177,7 +184,6 @@ def getCurrentHashrate(currentMiner, deviceID):
         currentSpeed = workerInformation["workers"][deviceID]['algorithms'][0]['speed']
 
         return currentSpeed
-
 
 
 def queryKnownPorts():
