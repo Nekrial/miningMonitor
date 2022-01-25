@@ -10,10 +10,12 @@ from pynvraw import *
 import smtplib, ssl
 import config
 from tkinter import messagebox
+import signal
+import psutil
 
 
 class gpu:
-    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail = 1,
+    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail = 0,
                  restartMiner = 0, shutdownSequence = 0, email=None):
         self.deviceID = deviceID
         self.minerType = minerType
@@ -29,22 +31,41 @@ class gpu:
         self.shutdownSequence = shutdownSequence
         self.knownPort = queryKnownPorts()
 
+    def limitExceeded(self,emailPreset):
+        # This list will grow as we add more supported miners
+        supportedMinerProcessDict = {
+            "Excavator" : "excavator.exe",
+            "QuickMiner" : "excavator.exe"
+        }
+        # Checking to see which of the protocols they are set to execute
+        if self.sendEmail == 1:
+            self.notifyEmail(emailPreset, timeout = 1)
+
+        if self.restartMiner == 1:
+            print(psutil.process_iter())
+            for proc in psutil.process_iter():
+                # check whether the process name matches
+                
+                if proc.name() == supportedMinerProcessDict[self.minerType]:
+                    proc.kill()
+
+
     def checkCoreTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.core_temp
 
         if currentTemp >= self.coreTemp:
-            emailCheck = self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+            emailPreset = (f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                                           f"The max temp you set me to monitor was {self.coreTemp}\n"
                                           f"The device model is {gpu.name}")
+            self.limitExceeded(emailPreset)
 
-            return emailCheck
 
     def checkMaxPower(self):
         gpu = get_phys_gpu(self.deviceID)
         currentPower = gpu.power
 
-        if currentPower >= self.coreTemp:
+        if currentPower >= self.powerMax:
 
             emailCheck = self.notifyEmail(
                 f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"

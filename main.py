@@ -427,12 +427,18 @@ class restartCheck(tk.Frame):
                                      message="Please select at least one of the options")
             #     To break out of the submission if the email box is selected but no email is input
             elif getEmailInputBoxValue() == '' and valueArray[0].get() == 1 :
-
                 return
             else:
                 # Appending each config file with the variables of what to do in case of failure
                 selectionDict["email"] = getEmailInputBoxValue()
                 for x in range(connectionAndAPI.countGpus()):
+                    #We must update each gpu in the gpu list to set the attributes of sendEmail
+                    gpuList[x].sendEmail = selectionDict["sendEmail"]
+                    gpuList[x].restartMiner = selectionDict["restartMiner"]
+                    gpuList[x].shutdownSequence = selectionDict["shutdownSequence"]
+                    gpuList[x].email = selectionDict["email"]
+                    # Okay I have no idea why i need this line of code below but I do
+                    gpuList[x].restartMiner
                     with open(f"Configs/config{x}.txt",'r+') as openFile:
                         data = json.load(openFile)
                         data.update(selectionDict)
@@ -463,7 +469,6 @@ class monitoringFrame(tk.Frame):
             if len(isEmptyCheck) == 0:
                 master.switch_frame(StartPage)
             for f in os.listdir(dir):
-                print("here")
                 os.remove(os.path.join(dir, f))
 
                 master.switch_frame(StartPage)
