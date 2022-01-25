@@ -47,13 +47,13 @@ class createApp(tk.Tk):
                 # Main loop for reading configs
             for x in kappa:
                 try:
-                    with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
+                    with open(f"Configs/config{x}.txt", 'r') as f:
                         json_object = json.load(f)
                         # This is in the event that the config does not contain
                         if configValidation.configVericaiton(json_object):
                             gpuList.append(connectionAndAPI.gpu.from_json(json_object))
                     #     Todo add a more indepth test for config validation that does not reset the file completely
-                    os.remove(f"Configs/config{x['device_id']}.txt")
+                    os.remove(f"Configs/config{x}.txt")
                     self.switch_frame(StartPage)
                 except IOError:
                     self.switch_frame(StartPage)
@@ -489,7 +489,7 @@ class monitoringFrame(tk.Frame):
 
 
 if __name__ == "__main__":
-    connectionAndAPI.testGpuConnection()
-    # app = createApp()
-    #
-    # app.mainloop()
+
+    app = createApp()
+
+    app.mainloop()

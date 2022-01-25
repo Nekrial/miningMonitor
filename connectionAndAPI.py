@@ -201,7 +201,7 @@ def testGpuConnection():
     # Gathering NVIDIA Gpus via pyvnraw
     gpuList = pynvraw.get_gpus()
     # If gpuList is empty then there are no supported nvidia gpus in the system
-    if gpuList == "":
+    if gpuList != "":
         for index, graphicsCard in enumerate(gpuList):
             deviceDict[index] = graphicsCard.name
         return deviceDict
@@ -212,7 +212,7 @@ def testGpuConnection():
 def countGpus():
     return len(get_gpus())
 
-
+# Should be updated to use the new test connection
 def currentDeviceWithoutConfig():
     try:
         kappa = testGpuConnection()
@@ -221,21 +221,19 @@ def currentDeviceWithoutConfig():
             with open(f"Configs/config{index}.txt", 'r') as f:
                 f.close()
     except IOError:
-        return x['device_id'], x['name']
+        return index, value
 
-
+# Should be updated to work with new test connection
 def gatherConfigs():
     kappa = testGpuConnection()
     configList = {}
-    var = 0
     for x in kappa:
+        print(x)
         try:
-            with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
-                configList[x['device_id']] = f"Configs/config{x['device_id']}.txt"
-                f.close()
+            with open(f"Configs/config{x}.txt", 'r') as f:
+                configList[x] = f"Configs/config{x}.txt"
         except IOError:
             continue
-
     return configList
 
 
