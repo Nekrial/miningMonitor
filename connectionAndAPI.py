@@ -10,11 +10,15 @@ from pynvraw import *
 import smtplib, ssl
 import config
 from tkinter import messagebox
+import signal
+import psutil
+import os
+import subprocess
 
 
 class gpu:
-    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail = 1,
-                 restartMiner = 0, shutdownSequence = 0, email=None):
+    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail=0,
+                 restartMiner=0, shutdownSequence=0, email=None):
         self.deviceID = deviceID
         self.minerType = minerType
         self.email = email
@@ -29,77 +33,94 @@ class gpu:
         self.shutdownSequence = shutdownSequence
         self.knownPort = queryKnownPorts()
 
+    def limitExceeded(self, emailPreset):
+        # This list will grow as we add more supported miners
+        supportedMinerProcessDict = {
+            "Excavator": "excavator.exe",
+            "QuickMiner": "excavator.exe"
+        }
+        # Checking to see which of the protocols they are set to execute
+        # This try block is to soley test the user inputted email and make exception parsing easier higher up in main
+
+        if self.sendEmail == 1:
+            self.notifyEmail(emailPreset)
+
+
+        if self.restartMiner == 1:
+            for proc in psutil.process_iter():
+                # check whether the process name matches. Possible exceptions
+                if proc.name() == supportedMinerProcessDict[self.minerType]:
+                    proc.kill()
+                    return "Miner kill attempted"
+        # Not going to lie, I haven't tested this shutdown feature and I am just hoping it works. I don't want to restart
+        if self.shutdownSequence == 1:
+            os.system("shutdown /s /t 1")
+            return "Shutdown Failed"
+
     def checkCoreTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.core_temp
 
         if currentTemp >= self.coreTemp:
-            emailCheck = self.notifyEmail(f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                                          f"The max temp you set me to monitor was {self.coreTemp}\n"
-                                          f"The device model is {gpu.name}")
-
-            return emailCheck
+            emailPreset = (f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
+                           f"The max temp you set me to monitor was {self.coreTemp}\n"
+                           f"The device model is {gpu.name}")
+            return self.limitExceeded(emailPreset)
 
     def checkMaxPower(self):
         gpu = get_phys_gpu(self.deviceID)
         currentPower = gpu.power
 
-        if currentPower >= self.coreTemp:
-
-            emailCheck = self.notifyEmail(
+        if currentPower >= self.powerMax:
+            emailPreset = (
                 f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
                 f"The max power draw you set me to monitor was {self.powerMax}\n"
                 f"The device model is {gpu.name}")
 
-            return emailCheck
+            return self.limitExceeded(emailPreset)
 
     def hotSpotTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.hotspot_temp
 
         if currentTemp >= self.hotSpotTemp():
-
-            emailCheck = self.notifyEmail(
+            emailPreset = (
                 f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                 f"The max how spot temp set me to monitor was {self.hotSpot}\n"
                 f"The device model is {gpu.name}")
-            return emailCheck
+
+            return self.limitExceeded(emailPreset)
 
     def checkMemTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.vram_temp
 
-        if currentTemp != None and currentTemp >= self.memTemp:
-            emailCheck = self.notifyEmail(
+        if currentTemp is not None and currentTemp >= self.memTemp:
+            emailPreset = (
                 f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                 f"The max memory temp you set me to monitor was {self.memTemp}\n"
                 f"The device model is {gpu.name}")
 
-            return emailCheck
+            return self.limitExceeded(emailPreset)
 
     def checkMaxHash(self):
-        workerInformation = requests.get(
-            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
-        workerInformation = workerInformation.json()
-
-        currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
+        currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
 
         if int(str(currentSpeed)[:2]) > self.maxHash:
-            emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
-                                          f"The max hashrate you set me to monitor was {self.maxHash}")
-            return emailCheck
+            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                           f"The max hashrate you set me to monitor was {self.maxHash}")
+            return self.limitExceeded(emailPreset)
 
     def checkMinHash(self):
-        workerInformation = requests.get(
-            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
-        workerInformation = workerInformation.json()
+        try:
+            currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
 
-        currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
-        if int(str(currentSpeed)[:2]) <= self.minHash:
-            emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
-                                          f"The min hashrate you set me to monitor was {self.minHash}")
-
-            return emailCheck
+            if int(str(currentSpeed)[:2]) <= self.minHash:
+                emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                               f"The min hashrate you set me to monitor was {self.minHash}")
+                return self.limitExceeded(emailPreset)
+        except:
+            print("hjey")
 
     def notifyEmail(self, whatBroke):
         port = 465  # For SSL
@@ -108,13 +129,11 @@ class gpu:
         receiver_email = self.email  # Enter receiver address
         password = config.emailPassword
         message = whatBroke
-        try:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-                server.login(sender_email, password)
-                server.sendmail(sender_email, receiver_email, message)
-        except smtplib.SMTPRecipientsRefused:
-            raise Exception("Please reset the profiles and add a valid email")
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, message)
 
     @classmethod
     def from_json(cls, json_string):
@@ -128,7 +147,6 @@ class gpu:
             "hotSpot": 110,
             "maxHash": 150,
             "minHash": 1
-
         }
         json_string = str(json_string).replace("null", "None")
         jsonBeingWeird = eval(str(json_string))
@@ -147,6 +165,26 @@ class gpu:
         return f"{self.deviceID}, {self.minerType}, {self.email}, {self.coreTemp}, {self.memTemp}, {self.powerMax}, {self.hotSpot}, {self.maxHash}, {self.minHash}"
 
 
+def getCurrentHashrate(currentMiner, deviceID):
+    if currentMiner == "Excavator":
+        workerInformation = requests.get(
+            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
+        workerInformation = workerInformation.json()
+
+        currentSpeed = workerInformation["workers"][deviceID]['algorithms'][0]['speed']
+
+        return currentSpeed
+
+    elif currentMiner == "QuickMiner":
+        workerInformation = requests.get(
+            'http://localhost:18000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
+        workerInformation = workerInformation.json()
+
+        currentSpeed = workerInformation["workers"][deviceID]['algorithms'][0]['speed']
+
+        return currentSpeed
+
+
 def queryKnownPorts():
     # Pinging the Excavator default port
     if is_HTTP_server_running('localhost', '4000'):
@@ -156,51 +194,46 @@ def queryKnownPorts():
     if is_HTTP_server_running('localhost', '18000'):
         return 'http://localhost:18000/api?command={"id":1,"method":"device.list","params":[]}'
 
-
+# TODO break this shit and make it not use miner info
 def testGpuConnection():
     deviceDict = {}
-    variable = 0
-
-    try:
-        gpuInformation = requests.get(queryKnownPorts(),
-                                      timeout=.1)
-        for x in gpuInformation.json()['devices']:
-            deviceDict[variable] = x
-            variable += 1
-        return gpuInformation.json()['devices']
-    except ConnectionError:
-        return
+    # Gathering NVIDIA Gpus via pyvnraw
+    gpuList = pynvraw.get_gpus()
+    # If gpuList is empty then there are no supported nvidia gpus in the system
+    if gpuList != "":
+        for index, graphicsCard in enumerate(gpuList):
+            deviceDict[index] = graphicsCard.name
+        return deviceDict
+    else:
+        return "No gpu detected"
 
 
 def countGpus():
     return len(get_gpus())
 
-
+# Should be updated to use the new test connection
 def currentDeviceWithoutConfig():
     try:
         kappa = testGpuConnection()
-        for x in kappa:
-            with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
+        for index, value in enumerate(kappa):
+            # Testing which is the first card without a config
+            with open(f"Configs/config{index}.txt", 'r') as f:
                 f.close()
     except IOError:
-        return x['device_id'], x['name']
+        return index, value
 
-
+# Should be updated to work with new test connection
 def gatherConfigs():
     kappa = testGpuConnection()
     configList = {}
-    var = 0
     for x in kappa:
+        print(x)
         try:
-            with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
-                configList[x['device_id']] = f"Configs/config{x['device_id']}.txt"
-                f.close()
+            with open(f"Configs/config{x}.txt", 'r') as f:
+                configList[x] = f"Configs/config{x}.txt"
         except IOError:
             continue
-
-
     return configList
-
 
 
 def is_HTTP_server_running(host, port, just_GAE_devserver=False):

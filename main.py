@@ -12,20 +12,25 @@ import os
 from configValidation import *
 import configValidation
 
+gpuList = []
 
-gpuList=[]
+
 class createApp(tk.Tk):
-
 
     def __init__(self):
         global gpuList
         tk.Tk.__init__(self)
         self._frame = None
+
         def resetAll(incQuit):
             dir = 'Configs'
+            # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
+            isEmptyCheck = (os.listdir(dir))
+            if len(isEmptyCheck) == 0:
+                quit()
             for f in os.listdir(dir):
                 os.remove(os.path.join(dir, f))
-
+            quit()
 
         kappa = connectionAndAPI.testGpuConnection()
         if kappa == "testGPUConnection Error":
@@ -34,7 +39,7 @@ class createApp(tk.Tk):
                           "Please note- Only NVIDIA Gpus are supported at this time\n"
                           "Resetting your profiles for each card may solve the issue").pack(
                 fill="x", pady=10)
-            tk.Button(self, text="Reset Profiles and restart program", command=lambda:resetAll(1)).pack()
+            tk.Button(self, text="Reset Profiles and restart program", command=lambda: resetAll(1)).pack()
         else:
             # Quick os call to make the configs directory if it does not already exist
             if not os.path.exists('Configs'):
@@ -42,23 +47,19 @@ class createApp(tk.Tk):
                 # Main loop for reading configs
             for x in kappa:
                 try:
-                    with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
+                    with open(f"Configs/config{x}.txt", 'r') as f:
                         json_object = json.load(f)
                         # This is in the event that the config does not contain
-                        configValidation.configVericaiton(json_object)
-                        gpuList.append(connectionAndAPI.gpu.from_json(json_object))
-
+                        if configValidation.configVericaiton(json_object):
+                            gpuList.append(connectionAndAPI.gpu.from_json(json_object))
+                    #     Todo add a more indepth test for config validation that does not reset the file completely
+                    os.remove(f"Configs/config{x}.txt")
+                    self.switch_frame(StartPage)
                 except IOError:
                     self.switch_frame(StartPage)
 
         if len(gpuList) == len(testGpuConnection()):
             self.switch_frame(monitoringFrame)
-
-
-
-
-
-
 
     def switch_frame(self, frame_class):
         """Destroys current frame and replaces it with a new one."""
@@ -111,7 +112,6 @@ class VariableSelection(tk.Frame):
 
         # Getters
 
-
         # this is a function to get the user input from the text input box
         def getCoreTempInputBoxValue():
 
@@ -123,9 +123,7 @@ class VariableSelection(tk.Frame):
                     return userInput
 
                 messagebox.showerror(title="Invalid Core Temp Input",
-                                    message="Please input a numerical Max Core Temperature")
-
-
+                                     message="Please input a numerical Max Core Temperature")
 
         # this is a function to get the user input from the text input box
         def getGDDRInputBoxValue():
@@ -140,7 +138,6 @@ class VariableSelection(tk.Frame):
                 messagebox.showerror(title="Invalid Memory Temp Input",
                                      message="Please input a numerical Max GDDR6X Temperature")
 
-
         # this is a function to get the user input from the text input box
         def getPowerInputBoxValue():
             userInput = gpuPowerInput.get()
@@ -153,7 +150,6 @@ class VariableSelection(tk.Frame):
                 messagebox.showerror(title="Invalid Max Power Input",
                                      message="Please input a numerical Max Power in Watts")
 
-
         # this is a function to get the user input from the text input box
         def getHotSpotInputBoxValue():
             userInput = hotSpotTempInput.get()
@@ -164,7 +160,6 @@ class VariableSelection(tk.Frame):
 
                 messagebox.showerror(title="Invalid Hot Spot Temp Input",
                                      message="Please input a numerical Max Hot Spot Temperature")
-
 
         def getMaxHashrateInputBoxValue():
             userInput = maxHashrateInput.get()
@@ -177,7 +172,6 @@ class VariableSelection(tk.Frame):
                 messagebox.showerror(title="Invalid Max Hashrate",
                                      message="Please input a numerical max hashrate")
 
-
         def getMinHashrateInputBoxValue():
             userInput = minHashrateInput.get()
             if minHashrateInput.cget('state') == "normal":
@@ -187,7 +181,6 @@ class VariableSelection(tk.Frame):
 
                 messagebox.showerror(title="Invalid Min Hashrate",
                                      message="Please input a numerical minimum hashrate")
-
 
         def getAllAndCheck():
 
@@ -210,7 +203,6 @@ class VariableSelection(tk.Frame):
                     "minHash": getMinHashrateInputBoxValue(),
                     }
 
-
             commandsDict = {
                 0: lambda: None,
                 1: lambda: None,
@@ -229,8 +221,6 @@ class VariableSelection(tk.Frame):
                 if value is None and commandsDict[index]() == 1:
                     return
 
-
-
             # The break cases where the data should not be sent to further processing
             if dict["minerType"] is None:
 
@@ -241,7 +231,7 @@ class VariableSelection(tk.Frame):
                     with open(f"Configs/config{nextDevice[0]}.txt", "w+") as outfile:
                         outfile.write(json_object)
                         gpuList.append(connectionAndAPI.gpu.from_json(json_object))
-                        
+
                         if len(connectionAndAPI.gatherConfigs()) != connectionAndAPI.countGpus():
                             app.switch_frame(StartPage)
 
@@ -263,7 +253,7 @@ class VariableSelection(tk.Frame):
 
         CoreTempCheck = Checkbutton(self, onvalue=1, offvalue=0, text='Core Temp', variable=coreTempCheckVariable,
                                     font=('arial', 8, 'normal'),
-                                    command=lambda: [show_entry(coreTempCheckVariable, coreTempInput, 103 ,100),
+                                    command=lambda: [show_entry(coreTempCheckVariable, coreTempInput, 103, 100),
                                                      coreTempInput.insert(tk.END, "Enter Max Core Temp")
                                                      ])
         CoreTempCheck.place(x=9, y=97)
@@ -286,7 +276,7 @@ class VariableSelection(tk.Frame):
         gpuPowerInput.bind("<Button-1>", on_click)
         gpuPowerInput.configure(state="disabled")
         gpuPowerCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Gpu Power Draw', variable=gpuPowerCheckboxVar,
-                                       command=lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput,134, 170),
+                                       command=lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput, 134, 170),
                                                         gpuPowerInput.insert(tk.END, "Enter Max Power(Watts)")])
         gpuPowerCheckbox.place(x=9, y=167)
         # End gpu power input block
@@ -298,8 +288,9 @@ class VariableSelection(tk.Frame):
 
         hotSpotTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Hot Spot Temp',
                                           variable=hotSpotTempCheckboxVar,
-                                          command=lambda: [show_entry(hotSpotTempCheckboxVar, hotSpotTempInput, 126, 201),
-                                                           hotSpotTempInput.insert(tk.END, "Enter Max Hot Spot")])
+                                          command=lambda: [
+                                              show_entry(hotSpotTempCheckboxVar, hotSpotTempInput, 126, 201),
+                                              hotSpotTempInput.insert(tk.END, "Enter Max Hot Spot")])
         hotSpotTempCheckbox.place(x=9, y=198)
 
         # Max Hashrate block
@@ -309,8 +300,9 @@ class VariableSelection(tk.Frame):
 
         maxHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Max Hashrate',
                                           variable=maxHashrateCheckboxVar,
-                                          command=lambda: [show_entry(maxHashrateCheckboxVar, maxHashrateInput,126, 230),
-                                                           maxHashrateInput.insert(tk.END, "Enter Max Hashrate")])
+                                          command=lambda: [
+                                              show_entry(maxHashrateCheckboxVar, maxHashrateInput, 126, 230),
+                                              maxHashrateInput.insert(tk.END, "Enter Max Hashrate")])
         maxHashrateCheckbox.place(x=9, y=227)
 
         # Min Hashrate block
@@ -320,22 +312,23 @@ class VariableSelection(tk.Frame):
 
         minHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Minimum Hashrate',
                                           variable=minHashrateCheckboxVar,
-                                          command=lambda: [show_entry(minHashrateCheckboxVar, minHashrateInput, 140, 260),
-                                                           minHashrateInput.insert(tk.END, "Enter Min Hashrate")])
+                                          command=lambda: [
+                                              show_entry(minHashrateCheckboxVar, minHashrateInput, 140, 260),
+                                              minHashrateInput.insert(tk.END, "Enter Min Hashrate")])
         minHashrateCheckbox.place(x=9, y=257)
 
         # This is the section of code which creates a button
         Button(self, text='Continue', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndCheck(
         )).place(x=101, y=300)
 
+
 # Places or unplaces the input box based on the checkbox value
 # Placing it out here so that multiple classes may use it
 def show_entry(var, widget, incX, incY):
-
     if var.get() == 1:
 
         # Clean up line and function. The if statement is to check if it is a label or a textbox as we do not want to delete text of a label
-        if type(widget)== "<class 'tkinter.Entry'>":
+        if type(widget) == "<class 'tkinter.Entry'>":
             widget.delete(0, tk.END)
         widget.configure(state="normal")
         widget.place(x=incX, y=incY)
@@ -366,10 +359,11 @@ class restartCheck(tk.Frame):
 
         shutDownComputer = tk.IntVar(value=0)
 
-        valueArray= [sendEmailCheckBox,restartMinerCheckbox,shutDownComputer]
+        valueArray = [sendEmailCheckBox, restartMinerCheckbox, shutDownComputer]
 
         commandsDict = {
-            0: lambda:[show_entry(valueArray[0], emailInputLable,9,200),show_entry(valueArray[0], emailInputBox, 9, 230)],
+            0: lambda: [show_entry(valueArray[0], emailInputLable, 9, 200),
+                        show_entry(valueArray[0], emailInputBox, 9, 230)],
             1: None,
             2: None
         }
@@ -387,60 +381,57 @@ class restartCheck(tk.Frame):
         for index, name in enumerate(whatDoText):
             # Generating the checkboxes
             x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[index], variable=valueArray[index],
-                                        font=('arial', 8, 'normal'), command =commandsDict[index])
+                            font=('arial', 8, 'normal'), command=commandsDict[index])
             x.place(x=9, y=yVar)
             yVar += 30
         # This is the section of code which creates the a label
         emailInputLable = Label(self, text='What email would you like to be notified at?',
-              font=('arial', 10, 'normal'))
+                                font=('arial', 10, 'normal'))
         emailInputBox = Entry(self, width=40)
 
         # This is the section of code which creates a text input box
 
-
         # This is the section of code which creates a button
-        Button(self, text='Begin Monitoring', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndProcess(valueArray
-        )).place(x=101, y=300)
-        #def show_entry(var, widget, incX, incY):
+        Button(self, text='Begin Monitoring', bg='#F0F8FF', font=('arial', 8, 'normal'),
+               command=lambda: getAllAndProcess(valueArray
+                                                )).place(x=101, y=300)
 
-
+        # def show_entry(var, widget, incX, incY):
 
         def getAllAndProcess(valueArray):
             # preparing values for json integration
 
             selectionDict = {
-                'sendEmail' : valueArray[0].get(),
-                'restartMiner' : valueArray[1].get(),
-                'shutdownSequence' : valueArray[2].get()
+                'sendEmail': valueArray[0].get(),
+                'restartMiner': valueArray[1].get(),
+                'shutdownSequence': valueArray[2].get()
             }
 
             # The break case if everything is null and nothing is selected
-            if sum(selectionDict.values())==0:
+            if sum(selectionDict.values()) == 0:
                 messagebox.showerror(title="No options selected",
                                      message="Please select at least one of the options")
             #     To break out of the submission if the email box is selected but no email is input
-            elif getEmailInputBoxValue() == '' and valueArray[0].get() == 1 :
-
+            elif getEmailInputBoxValue() == '' and valueArray[0].get() == 1:
                 return
             else:
                 # Appending each config file with the variables of what to do in case of failure
                 selectionDict["email"] = getEmailInputBoxValue()
                 for x in range(connectionAndAPI.countGpus()):
-                    with open(f"Configs/config{x}.txt",'r+') as openFile:
+                    # We must update each gpu in the gpu list to set the attributes of sendEmail
+                    gpuList[x].sendEmail = selectionDict["sendEmail"]
+                    gpuList[x].restartMiner = selectionDict["restartMiner"]
+                    gpuList[x].shutdownSequence = selectionDict["shutdownSequence"]
+                    gpuList[x].email = selectionDict["email"]
+                    # Okay I have no idea why i need this line of code below but I do
+                    gpuList[x].restartMiner
+                    with open(f"Configs/config{x}.txt", 'r+') as openFile:
                         data = json.load(openFile)
                         data.update(selectionDict)
                         openFile.seek(0)
-                        json.dump(data,openFile)
+                        json.dump(data, openFile)
                         openFile.close()
                 master.switch_frame(monitoringFrame)
-
-
-
-
-
-
-
-
 
 
 class monitoringFrame(tk.Frame):
@@ -449,32 +440,43 @@ class monitoringFrame(tk.Frame):
         global gpuList
         tk.Frame.__init__(self, master)
         master.title("Monitoring Station")
+
         def resetAll():
             dir = 'Configs'
+            # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
+            isEmptyCheck = (os.listdir(dir))
+            if len(isEmptyCheck) == 0:
+                master.switch_frame(StartPage)
             for f in os.listdir(dir):
                 os.remove(os.path.join(dir, f))
+
                 master.switch_frame(StartPage)
+
         if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
             tk.Label(self,
                      text="I cannot connect to the miner. Do you have it running?").pack(
                 fill="x", pady=10)
-            tk.Button(self, text="Reset Profiles", command=lambda:resetAll()).pack
+            var = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
+            var.pack()
 
             # The monitoring loop. Checks each gpus present
         label1 = tk.Label(self,
-                 text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings")
+                          text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings")
         label1.pack(
             fill="x", pady=10)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
         button1.pack()
+        # TODO I do not like this exception loop. Its too vague and I did get some random api error on one run attempt
         try:
-            for gpu in gpuList:
-                    gpu.checkMaxHash()
-                    gpu.checkMinHash()
-                    gpu.checkMaxPower()
-                    gpu.checkCoreTemp()
-                    gpu.checkMemTemp()
-        except:
+            for graphicsCard in gpuList:
+                graphicsCard.checkMaxHash() 
+                graphicsCard.checkMinHash()
+                graphicsCard.checkMaxPower()
+                graphicsCard.checkCoreTemp()
+                graphicsCard.checkMemTemp()
+
+        except Exception as e:
+            print(Exception)
             button1.pack_forget()
             label1.pack_forget()
             tk.Label(self,
@@ -483,16 +485,11 @@ class monitoringFrame(tk.Frame):
                 fill="x", pady=10)
             tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
 
-        self.after(5000,lambda: master.switch_frame(monitoringFrame))
-
-
-
-
-
+        self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
 
 if __name__ == "__main__":
-    app = createApp()
 
+    app = createApp()
 
     app.mainloop()
