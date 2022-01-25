@@ -489,6 +489,7 @@ class monitoringFrame(tk.Frame):
 
 
 if __name__ == "__main__":
-    app = createApp()
-
-    app.mainloop()
+    connectionAndAPI.testGpuConnection()
+    # app = createApp()
+    #
+    # app.mainloop()

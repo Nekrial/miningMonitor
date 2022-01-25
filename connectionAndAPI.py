@@ -195,20 +195,18 @@ def queryKnownPorts():
     if is_HTTP_server_running('localhost', '18000'):
         return 'http://localhost:18000/api?command={"id":1,"method":"device.list","params":[]}'
 
-
+# TODO break this shit and make it not use miner info
 def testGpuConnection():
     deviceDict = {}
-    variable = 0
-
-    try:
-        gpuInformation = requests.get(queryKnownPorts(),
-                                      timeout=.1)
-        for x in gpuInformation.json()['devices']:
-            deviceDict[variable] = x
-            variable += 1
-        return gpuInformation.json()['devices']
-    except ConnectionError:
-        return
+    # Gathering NVIDIA Gpus via pyvnraw
+    gpuList = pynvraw.get_gpus()
+    # If gpuList is empty then there are no supported nvidia gpus in the system
+    if gpuList == "":
+        for index, graphicsCard in enumerate(gpuList):
+            deviceDict[index] = graphicsCard.name
+        return deviceDict
+    else:
+        return "No gpu detected"
 
 
 def countGpus():
@@ -218,8 +216,9 @@ def countGpus():
 def currentDeviceWithoutConfig():
     try:
         kappa = testGpuConnection()
-        for x in kappa:
-            with open(f"Configs/config{x['device_id']}.txt", 'r') as f:
+        for index, value in enumerate(kappa):
+            # Testing which is the first card without a config
+            with open(f"Configs/config{index}.txt", 'r') as f:
                 f.close()
     except IOError:
         return x['device_id'], x['name']
