@@ -485,15 +485,17 @@ class monitoringFrame(tk.Frame):
             fill="x", pady=10)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
         button1.pack()
+        # TODO I do not like this exception loop. Its too vague and I did get some random api error on one run attempt
         try:
-            for gpu in gpuList:
-                    gpu.checkMaxHash()
-                    gpu.checkMinHash()
-                    gpu.checkMaxPower()
-                    gpu.checkCoreTemp()
-                    gpu.checkMemTemp()
+            for graphicsCard in gpuList:
+                    graphicsCard.checkMaxHash()
+                    graphicsCard.checkMinHash()
+                    graphicsCard.checkMaxPower()
+                    graphicsCard.checkCoreTemp()
+                    graphicsCard.checkMemTemp()
 
-        except:
+        except Exception as e:
+            print(e)
             button1.pack_forget()
             label1.pack_forget()
             tk.Label(self,
@@ -502,7 +504,7 @@ class monitoringFrame(tk.Frame):
                 fill="x", pady=10)
             tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
 
-        self.after(5000,lambda: master.switch_frame(monitoringFrame))
+        self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
 
 

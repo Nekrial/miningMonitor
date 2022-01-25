@@ -12,11 +12,12 @@ import config
 from tkinter import messagebox
 import signal
 import psutil
+import os
 
 
 class gpu:
-    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail = 0,
-                 restartMiner = 0, shutdownSequence = 0, email=None):
+    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail=0,
+                 restartMiner=0, shutdownSequence=0, email=None):
         self.deviceID = deviceID
         self.minerType = minerType
         self.email = email
@@ -31,24 +32,24 @@ class gpu:
         self.shutdownSequence = shutdownSequence
         self.knownPort = queryKnownPorts()
 
-    def limitExceeded(self,emailPreset):
+    def limitExceeded(self, emailPreset):
         # This list will grow as we add more supported miners
         supportedMinerProcessDict = {
-            "Excavator" : "excavator.exe",
-            "QuickMiner" : "excavator.exe"
+            "Excavator": "excavator.exe",
+            "QuickMiner": "excavator.exe"
         }
         # Checking to see which of the protocols they are set to execute
         if self.sendEmail == 1:
-            self.notifyEmail(emailPreset, timeout = 1)
+            self.notifyEmail(emailPreset, timeout=1)
 
         if self.restartMiner == 1:
-            print(psutil.process_iter())
             for proc in psutil.process_iter():
-                # check whether the process name matches
-                
+                # check whether the process name matches. Possible exceptions
                 if proc.name() == supportedMinerProcessDict[self.minerType]:
                     proc.kill()
 
+        if self.shutdownSequence == 1:
+            os.system("shutdown /s /t 1")
 
     def checkCoreTemp(self):
         gpu = get_phys_gpu(self.deviceID)
@@ -56,71 +57,61 @@ class gpu:
 
         if currentTemp >= self.coreTemp:
             emailPreset = (f"The current core temp of gpu {self.deviceID} is currently {currentTemp}c\n"
-                                          f"The max temp you set me to monitor was {self.coreTemp}\n"
-                                          f"The device model is {gpu.name}")
+                           f"The max temp you set me to monitor was {self.coreTemp}\n"
+                           f"The device model is {gpu.name}")
             self.limitExceeded(emailPreset)
-
 
     def checkMaxPower(self):
         gpu = get_phys_gpu(self.deviceID)
         currentPower = gpu.power
 
         if currentPower >= self.powerMax:
-
-            emailCheck = self.notifyEmail(
+            emailPreset = (
                 f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
                 f"The max power draw you set me to monitor was {self.powerMax}\n"
                 f"The device model is {gpu.name}")
 
-            return emailCheck
+            self.limitExceeded(emailPreset)
 
     def hotSpotTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.hotspot_temp
 
         if currentTemp >= self.hotSpotTemp():
-
-            emailCheck = self.notifyEmail(
+            emailPreset = (
                 f"The current hotspot temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                 f"The max how spot temp set me to monitor was {self.hotSpot}\n"
                 f"The device model is {gpu.name}")
-            return emailCheck
+
+            self.limitExceeded(emailPreset)
 
     def checkMemTemp(self):
         gpu = get_phys_gpu(self.deviceID)
         currentTemp = gpu.vram_temp
 
-        if currentTemp != None and currentTemp >= self.memTemp:
-            emailCheck = self.notifyEmail(
+        if currentTemp is not None and currentTemp >= self.memTemp:
+            emailPreset = (
                 f"The current memory temp of gpu {self.deviceID} is currently {currentTemp}c\n"
                 f"The max memory temp you set me to monitor was {self.memTemp}\n"
                 f"The device model is {gpu.name}")
 
-            return emailCheck
+            self.limitExceeded(emailPreset)
 
     def checkMaxHash(self):
-        workerInformation = requests.get(
-            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
-        workerInformation = workerInformation.json()
-
-        currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
+        currentSpeed = getCurrentHashrate(self.minerType,self.deviceID)
 
         if int(str(currentSpeed)[:2]) > self.maxHash:
-            emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+            emailPreset = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                                           f"The max hashrate you set me to monitor was {self.maxHash}")
-            return emailCheck
+            self.limitExceeded(emailPreset)
 
     def checkMinHash(self):
-        workerInformation = requests.get(
-            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
-        workerInformation = workerInformation.json()
+        currentSpeed = getCurrentHashrate(self.minerType,self.deviceID)
 
-        currentSpeed = workerInformation["workers"][self.deviceID]['algorithms'][0]['speed']
         if int(str(currentSpeed)[:2]) <= self.minHash:
-            emailCheck = self.notifyEmail(f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                                           f"The min hashrate you set me to monitor was {self.minHash}")
-
-            return emailCheck
+            self.limitExceeded(emailPreset)
 
     def notifyEmail(self, whatBroke):
         port = 465  # For SSL
@@ -149,7 +140,6 @@ class gpu:
             "hotSpot": 110,
             "maxHash": 150,
             "minHash": 1
-
         }
         json_string = str(json_string).replace("null", "None")
         jsonBeingWeird = eval(str(json_string))
@@ -166,6 +156,28 @@ class gpu:
 
     def __repr__(self):
         return f"{self.deviceID}, {self.minerType}, {self.email}, {self.coreTemp}, {self.memTemp}, {self.powerMax}, {self.hotSpot}, {self.maxHash}, {self.minHash}"
+
+
+def getCurrentHashrate(currentMiner, deviceID):
+
+    if currentMiner == "Excavator":
+        workerInformation = requests.get(
+            'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
+        workerInformation = workerInformation.json()
+
+        currentSpeed = workerInformation["workers"][deviceID]['algorithms'][0]['speed']
+
+        return currentSpeed
+
+    elif currentMiner == "QuickMiner":
+        workerInformation = requests.get(
+            'http://localhost:18000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
+        workerInformation = workerInformation.json()
+
+        currentSpeed = workerInformation["workers"][deviceID]['algorithms'][0]['speed']
+
+        return currentSpeed
+
 
 
 def queryKnownPorts():
@@ -219,9 +231,7 @@ def gatherConfigs():
         except IOError:
             continue
 
-
     return configList
-
 
 
 def is_HTTP_server_running(host, port, just_GAE_devserver=False):
