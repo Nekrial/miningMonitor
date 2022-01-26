@@ -493,7 +493,7 @@ class monitoringFrame(tk.Frame):
                     "update cycle for connection to be restored")
                 break
 
-        self.after(30000, lambda: master.switch_frame(monitoringFrame))
+        self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
 
 if __name__ == "__main__":

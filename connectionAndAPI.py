@@ -14,7 +14,7 @@ import signal
 import psutil
 import os
 from os import path
-
+from datetime import datetime
 
 class gpu:
     def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail=0,
@@ -31,6 +31,15 @@ class gpu:
         self.sendEmail = sendEmail
         self.restartMiner = restartMiner
         self.shutdownSequence = shutdownSequence
+        self.emailTimer = datetime.now()
+        self.restartTimer = datetime.now()
+
+    def timeDifference(self, incTime):
+        exactTime = datetime.now()
+
+        difference = (exactTime - incTime)
+
+        return difference.total_seconds()
 
 
     def limitExceeded(self, emailPreset):
@@ -42,20 +51,23 @@ class gpu:
         # Checking to see which of the protocols they are set to execute
         try:
             if self.sendEmail == 1:
-                self.notifyEmail(emailPreset)
+                timerDif = self.timeDifference(self.emailTimer)
+                if timerDif > 45:
+                    self.notifyEmail(emailPreset)
         except smtplib.SMTPRecipientsRefused:
             # Invalid email but one of the other two more important processes needs to be ran
             if self.restartMiner or self.shutdownSequence == 1:
                 pass
             return "Email Error"
 
-
         if self.restartMiner == 1:
-            for proc in psutil.process_iter():
-                # check whether the process name matches. Possible exceptions
-                if proc.name() == supportedMinerProcessDict[self.minerType]:
-                    proc.kill()
-                    return "Miner kill attempted"
+            timerDif = self.timeDifference(self.restartTimer)
+            if timerDif > 45:
+                for proc in psutil.process_iter():
+                    # check whether the process name matches. Possible exceptions
+                    if proc.name() == supportedMinerProcessDict[self.minerType]:
+                        proc.kill()
+                        return "Miner kill attempted"
         # Not going to lie, I haven't tested this shutdown feature and I am just hoping it works. I don't want to restart
         if self.shutdownSequence == 1:
             os.system("shutdown /s /t 1")
@@ -112,8 +124,7 @@ class gpu:
         # Error checking
         if currentSpeed =="Miner not detected":
             return "Miner not detected"
-
-        if int(currentSpeed)[:2] > self.maxHash:
+        if int(str(currentSpeed)[:2]) > self.maxHash:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                            f"The max hashrate you set me to monitor was {self.maxHash}")
             return self.limitExceeded(emailPreset)
@@ -126,7 +137,7 @@ class gpu:
         if currentSpeed =="Miner not detected":
             return "Miner not detected"
 
-        if int(currentSpeed)[:2] <= self.minHash:
+        if int(str(currentSpeed)[:2]) <= self.minHash:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                            f"The min hashrate you set me to monitor was {self.minHash}")
             return self.limitExceeded(emailPreset)
