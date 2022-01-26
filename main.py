@@ -425,7 +425,6 @@ class restartCheck(tk.Frame):
                     gpuList[x].shutdownSequence = selectionDict["shutdownSequence"]
                     gpuList[x].email = selectionDict["email"]
                     # Okay I have no idea why i need this line of code below but I do
-                    gpuList[x].restartMiner
                     with open(f"Configs/config{x}.txt", 'r+') as openFile:
                         data = json.load(openFile)
                         data.update(selectionDict)
@@ -473,10 +472,15 @@ class monitoringFrame(tk.Frame):
             fill="x", pady=10)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
         button1.pack()
-        # TODO I do not like this exception loop. Its too vague and I did get some random api error on one run attempt
+        # Check to make sure the gpus are still detectable by the system. If they are not it resycles the monitoring
+        # This solves exceptions in the check methods that rely on the gpu being detected
+        if connectionAndAPI.testGpuConnection() == {}:
+            errorWindow(
+                "I have lost my connection to the miner. Please make sure it is running or wait for the next"
+                "update cycle for connection to be restored")
+            self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
         for graphicsCard in gpuList:
-
             graphicsCard.checkMaxPower()
             graphicsCard.checkCoreTemp()
             graphicsCard.checkMemTemp()
@@ -488,9 +492,6 @@ class monitoringFrame(tk.Frame):
                     "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                     "update cycle for connection to be restored")
                 break
-
-
-
 
         self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
