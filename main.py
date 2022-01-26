@@ -22,7 +22,7 @@ class createApp(tk.Tk):
         tk.Tk.__init__(self)
         self._frame = None
 
-        def resetAll(incQuit):
+        def resetAll():
             dir = 'Configs'
             # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
             isEmptyCheck = (os.listdir(dir))
@@ -39,7 +39,7 @@ class createApp(tk.Tk):
                           "Please note- Only NVIDIA Gpus are supported at this time\n"
                           "Resetting your profiles for each card may solve the issue").pack(
                 fill="x", pady=10)
-            tk.Button(self, text="Reset Profiles and restart program", command=lambda: resetAll(1)).pack()
+            tk.Button(self, text="Reset Profiles and restart program", command=lambda: resetAll()).pack()
         else:
             # Quick os call to make the configs directory if it does not already exist
             if not os.path.exists('Configs'):
@@ -53,8 +53,9 @@ class createApp(tk.Tk):
                         if configValidation.configVericaiton(json_object):
                             gpuList.append(connectionAndAPI.gpu.from_json(json_object))
                     #     Todo add a more indepth test for config validation that does not reset the file completely
-                    os.remove(f"Configs/config{x}.txt")
-                    self.switch_frame(StartPage)
+                        else:
+                            os.remove(f"Configs/config{x}.txt")
+                            self.switch_frame(StartPage)
                 except IOError:
                     self.switch_frame(StartPage)
 
@@ -74,11 +75,11 @@ class StartPage(tk.Frame):
     def __init__(self, master):
 
         tk.Frame.__init__(self, master)
-        nextDevice = connectionAndAPI.currentDeviceWithoutConfig()
-        if nextDevice != None:
+        currentDevice = connectionAndAPI.currentDeviceWithoutConfig()
+        if currentDevice != None:
             master.title("Start Up Page")
             tk.Label(self,
-                     text=f'This is the setup for GPU number {nextDevice[0] + 1} which is a {nextDevice[1]}').grid()
+                     text=f'This is the setup for GPU number {currentDevice[0] + 1} which is a {currentDevice[1]}').grid()
             tk.Label(self, text="What miner are you using?").grid()
             tk.Button(self, text="QuickMiner",
                       command=lambda: [setattr(app, "minerType", "QuickMiner"),
@@ -442,6 +443,7 @@ class monitoringFrame(tk.Frame):
         master.title("Monitoring Station")
 
         def resetAll():
+            print("Reser all 2")
             dir = 'Configs'
             # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
             isEmptyCheck = (os.listdir(dir))
@@ -452,6 +454,13 @@ class monitoringFrame(tk.Frame):
 
                 master.switch_frame(StartPage)
 
+        def errorWindow(incMessage):
+            button1.pack_forget()
+            label1.pack_forget()
+            tk.Label(self,
+                     text=incMessage).pack(
+                fill="x", pady=10)
+            tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
         if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
             tk.Label(self,
                      text="I cannot connect to the miner. Do you have it running?").pack(
@@ -469,21 +478,19 @@ class monitoringFrame(tk.Frame):
         # TODO I do not like this exception loop. Its too vague and I did get some random api error on one run attempt
         try:
             for graphicsCard in gpuList:
-                graphicsCard.checkMaxHash()
-                graphicsCard.checkMinHash()
+                # Instead of raising an exception here we will check if the returned values of the checks are floats
+                # If they are not floats then the email method returned its "error" message
+                if not isinstance(graphicsCard.checkMaxHash(), float) or not isinstance(graphicsCard.checkMinHash(), float):
+                    errorWindow("I have lost my connection to the miner. Please make sure it is running")
+
+
                 graphicsCard.checkMaxPower()
                 graphicsCard.checkCoreTemp()
                 graphicsCard.checkMemTemp()
 
         except Exception as e:
-            print(Exception)
-            button1.pack_forget()
-            label1.pack_forget()
-            tk.Label(self,
-                     text="An invalid email address was detected in your profile\n"
-                          "Please reset your profiles with the button below").pack(
-                fill="x", pady=10)
-            tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
+            print(e)
+
 
         self.after(30000, lambda: master.switch_frame(monitoringFrame))
 

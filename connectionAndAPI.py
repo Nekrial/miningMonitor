@@ -13,7 +13,7 @@ from tkinter import messagebox
 import signal
 import psutil
 import os
-import subprocess
+from os import path
 
 
 class gpu:
@@ -40,10 +40,11 @@ class gpu:
             "QuickMiner": "excavator.exe"
         }
         # Checking to see which of the protocols they are set to execute
-        # This try block is to soley test the user inputted email and make exception parsing easier higher up in main
-
-        if self.sendEmail == 1:
-            self.notifyEmail(emailPreset)
+        try:
+            if self.sendEmail == 1:
+                self.notifyEmail(emailPreset)
+        except Exception as e:
+            print(e)
 
 
         if self.restartMiner == 1:
@@ -110,17 +111,18 @@ class gpu:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                            f"The max hashrate you set me to monitor was {self.maxHash}")
             return self.limitExceeded(emailPreset)
+        # Current speed will either be a number or an error statement if the miner is not detected
+        return currentSpeed
 
     def checkMinHash(self):
-        try:
-            currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
+        currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
 
-            if int(str(currentSpeed)[:2]) <= self.minHash:
-                emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
-                               f"The min hashrate you set me to monitor was {self.minHash}")
-                return self.limitExceeded(emailPreset)
-        except:
-            print("hjey")
+        if int(str(currentSpeed)[:2]) <= self.minHash:
+            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+                           f"The min hashrate you set me to monitor was {self.minHash}")
+            return self.limitExceeded(emailPreset)
+        # Current speed will either be a number or an error statement if the miner is not detected
+        return currentSpeed
 
     def notifyEmail(self, whatBroke):
         port = 465  # For SSL
@@ -134,7 +136,7 @@ class gpu:
         with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
             server.login(sender_email, password)
             server.sendmail(sender_email, receiver_email, message)
-
+    # Object init method
     @classmethod
     def from_json(cls, json_string):
         defaults = {
@@ -166,7 +168,7 @@ class gpu:
 
 
 def getCurrentHashrate(currentMiner, deviceID):
-    
+
     if currentMiner == "Excavator" and is_HTTP_server_running('localhost', '4000'):
         workerInformation = requests.get(
             'http://localhost:4000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
@@ -185,8 +187,10 @@ def getCurrentHashrate(currentMiner, deviceID):
 
         return currentSpeed
 
+    return "Miner not detected"
 
-# TODO break this shit and make it not use miner info
+
+
 def testGpuConnection():
     deviceDict = {}
     # Gathering NVIDIA Gpus via pyvnraw
@@ -212,19 +216,17 @@ def currentDeviceWithoutConfig():
             with open(f"Configs/config{index}.txt", 'r') as f:
                 f.close()
     except IOError:
-        return index, value
+        return index, kappa[index]
+
 
 # Should be updated to work with new test connection
 def gatherConfigs():
     kappa = testGpuConnection()
     configList = {}
     for x in kappa:
-        print(x)
-        try:
-            with open(f"Configs/config{x}.txt", 'r') as f:
-                configList[x] = f"Configs/config{x}.txt"
-        except IOError:
-            continue
+        if path.exists(f"Configs/config{x}.txt"):
+            configList[x] = f"Configs/config{x}.txt"
+
     return configList
 
 
