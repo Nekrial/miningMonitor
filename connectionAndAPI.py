@@ -43,8 +43,11 @@ class gpu:
         try:
             if self.sendEmail == 1:
                 self.notifyEmail(emailPreset)
-        except Exception as e:
-            print(e)
+        except smtplib.SMTPRecipientsRefused:
+            # Invalid email but one of the other two more important processes needs to be ran
+            if self.restartMiner or self.shutdownSequence == 1:
+                pass
+            return "Email Error"
 
 
         if self.restartMiner == 1:
@@ -106,8 +109,11 @@ class gpu:
 
     def checkMaxHash(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
+        # Error checking
+        if currentSpeed =="Miner not detected":
+            return "Miner not detected"
 
-        if int(str(currentSpeed)[:2]) > self.maxHash:
+        if int(currentSpeed)[:2] > self.maxHash:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                            f"The max hashrate you set me to monitor was {self.maxHash}")
             return self.limitExceeded(emailPreset)
@@ -117,7 +123,10 @@ class gpu:
     def checkMinHash(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
 
-        if int(str(currentSpeed)[:2]) <= self.minHash:
+        if currentSpeed =="Miner not detected":
+            return "Miner not detected"
+
+        if int(currentSpeed)[:2] <= self.minHash:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
                            f"The min hashrate you set me to monitor was {self.minHash}")
             return self.limitExceeded(emailPreset)

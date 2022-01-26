@@ -443,7 +443,6 @@ class monitoringFrame(tk.Frame):
         master.title("Monitoring Station")
 
         def resetAll():
-            print("Reser all 2")
             dir = 'Configs'
             # Checking if the directory is somehow empty. If the dir is empty and the reset button is hit the program stalls
             isEmptyCheck = (os.listdir(dir))
@@ -451,8 +450,7 @@ class monitoringFrame(tk.Frame):
                 master.switch_frame(StartPage)
             for f in os.listdir(dir):
                 os.remove(os.path.join(dir, f))
-
-                master.switch_frame(StartPage)
+            master.switch_frame(StartPage)
 
         def errorWindow(incMessage):
             button1.pack_forget()
@@ -476,20 +474,22 @@ class monitoringFrame(tk.Frame):
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
         button1.pack()
         # TODO I do not like this exception loop. Its too vague and I did get some random api error on one run attempt
-        try:
-            for graphicsCard in gpuList:
-                # Instead of raising an exception here we will check if the returned values of the checks are floats
-                # If they are not floats then the email method returned its "error" message
-                if not isinstance(graphicsCard.checkMaxHash(), float) or not isinstance(graphicsCard.checkMinHash(), float):
-                    errorWindow("I have lost my connection to the miner. Please make sure it is running")
+
+        for graphicsCard in gpuList:
+
+            graphicsCard.checkMaxPower()
+            graphicsCard.checkCoreTemp()
+            graphicsCard.checkMemTemp()
+            # Instead of raising an exception here we will check if the returned values of the checks are floats
+            # If they are not floats then the email method returned its "error" message. The break cancels the checks
+            # but allows it to keep running in the next cycle if connection is properly restored
+            if not isinstance(graphicsCard.checkMaxHash(), float) or not isinstance(graphicsCard.checkMinHash(), float):
+                errorWindow(
+                    "I have lost my connection to the miner. Please make sure it is running or wait for the next"
+                    "update cycle for connection to be restored")
+                break
 
 
-                graphicsCard.checkMaxPower()
-                graphicsCard.checkCoreTemp()
-                graphicsCard.checkMemTemp()
-
-        except Exception as e:
-            print(e)
 
 
         self.after(30000, lambda: master.switch_frame(monitoringFrame))
