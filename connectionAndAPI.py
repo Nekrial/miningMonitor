@@ -52,7 +52,8 @@ class gpu:
         try:
             if self.sendEmail == 1:
                 timerDif = self.timeDifference(self.emailTimer)
-                if timerDif > 45:
+                # This will only send them an email every 30 minutes instead of spamming them every 45 seconds
+                if timerDif > 18000:
                     self.notifyEmail(emailPreset)
         except smtplib.SMTPRecipientsRefused:
             # Invalid email but one of the other two more important processes needs to be ran
@@ -62,7 +63,8 @@ class gpu:
 
         if self.restartMiner == 1:
             timerDif = self.timeDifference(self.restartTimer)
-            if timerDif > 45:
+            # This will only restart the mienr e
+            if timerDif > 60:
                 for proc in psutil.process_iter():
                     # check whether the process name matches. Possible exceptions
                     if proc.name() == supportedMinerProcessDict[self.minerType]:
