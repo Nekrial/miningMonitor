@@ -17,9 +17,10 @@ from os import path
 from datetime import datetime
 
 class gpu:
-    def __init__(self, deviceID, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail=0,
+    def __init__(self, deviceID, deviceName, minerType, coreTemp, memTemp, powerMax, hotSpot, maxHash, minHash, sendEmail=0,
                  restartMiner=0, shutdownSequence=0, email=None):
         self.deviceID = deviceID
+        self.deviceName = deviceName
         self.minerType = minerType
         self.email = email
         self.coreTemp = coreTemp
@@ -63,7 +64,7 @@ class gpu:
 
         if self.restartMiner == 1:
             timerDif = self.timeDifference(self.restartTimer)
-            # This will only restart the mienr e
+            # This will only restart the miner once per minute else errors can build and cause gpus not to be detected
             if timerDif > 60:
                 for proc in psutil.process_iter():
                     # check whether the process name matches. Possible exceptions
@@ -181,7 +182,7 @@ class gpu:
         return cls(**jsonBeingWeird)
 
     def __str__(self):
-        return f"Device ID = {self.deviceID}, Miner Type = {self.minerType}, Email = {self.email}, Core Temp Max = {self.coreTemp}\n" \
+        return f"Device ID = {self.deviceID}, The device name is {self.deviceName}, Miner Type = {self.minerType}, Email = {self.email}, Core Temp Max = {self.coreTemp}\n" \
                f"Max Memory Temp = {self.memTemp}, Power Max in Watts = {self.powerMax}, Max Hot Spot Temp = {self.hotSpot}, \n" \
                f"Max hashrate = {self.maxHash}, Minimum hashrate = {self.minHash}"
 

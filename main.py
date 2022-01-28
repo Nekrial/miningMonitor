@@ -54,6 +54,8 @@ class createApp(tk.Tk):
                             gpuList.append(connectionAndAPI.gpu.from_json(json_object))
                         #     Todo add a more indepth test for config validation that does not reset the file completely
                         else:
+                            # Manually closing f so that we are able to remove the file
+                            f.close()
                             os.remove(f"Configs/config{x}.txt")
                             self.switch_frame(StartPage)
                 except IOError:
@@ -73,7 +75,6 @@ class createApp(tk.Tk):
 
 class StartPage(tk.Frame):
     def __init__(self, master):
-
         tk.Frame.__init__(self, master)
         currentDevice = connectionAndAPI.currentDeviceWithoutConfig()
         if currentDevice != None:
@@ -217,43 +218,46 @@ class VariableSelection(tk.Frame):
 
             nextDevice = connectionAndAPI.currentDeviceWithoutConfig()
 
-            dict = {"deviceID": nextDevice[0],
+            checkingDict = {"deviceID": nextDevice[0],
 
-                    "minerType": app.minerType,
+                            "deviceName": nextDevice[1],
 
-                    "coreTemp": getCoreTempInputBoxValue(),
+                            "minerType": app.minerType,
 
-                    "memTemp": getGDDRInputBoxValue(),
+                            "coreTemp": getCoreTempInputBoxValue(),
 
-                    "powerMax": getPowerInputBoxValue(),
+                            "memTemp": getGDDRInputBoxValue(),
 
-                    "hotSpot": getHotSpotInputBoxValue(),
+                            "powerMax": getPowerInputBoxValue(),
 
-                    "maxHash": getMaxHashrateInputBoxValue(),
+                            "hotSpot": getHotSpotInputBoxValue(),
 
-                    "minHash": getMinHashrateInputBoxValue(),
-                    }
+                            "maxHash": getMaxHashrateInputBoxValue(),
+
+                            "minHash": getMinHashrateInputBoxValue(),
+                            }
 
             commandsDict = {
                 0: lambda: None,
                 1: lambda: None,
-                2: lambda: coreTempCheckVariable.get(),
-                3: lambda: gddrTempCheckboxVariable.get(),
-                4: lambda: gpuPowerCheckboxVar.get(),
-                5: lambda: hotSpotTempCheckboxVar.get(),
-                6: lambda: maxHashrateCheckboxVar.get(),
-                7: lambda: minHashrateCheckboxVar.get(),
+                2: lambda: None,
+                3: lambda: coreTempCheckVariable.get(),
+                4: lambda: gddrTempCheckboxVariable.get(),
+                5: lambda: gpuPowerCheckboxVar.get(),
+                6: lambda: hotSpotTempCheckboxVar.get(),
+                7: lambda: maxHashrateCheckboxVar.get(),
+                8: lambda: minHashrateCheckboxVar.get(),
             }
-            json_object = json.dumps(dict)
+            json_object = json.dumps(checkingDict)
 
             # This look checks if any check box is ticked but does not have a value in it. This also allows the error message
             #  to appear properly and not reset the users already inputted data
-            for index, value in enumerate(dict.values()):
+            for index, value in enumerate(checkingDict.values()):
                 if value is None and commandsDict[index]() == 1:
                     return
 
             # The break cases where the data should not be sent to further processing
-            if dict["minerType"] is None:
+            if checkingDict["minerType"] is None:
                 return
             else:
 
@@ -492,6 +496,7 @@ class monitoringFrame(tk.Frame):
                     "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                     "update cycle for connection to be restored")
                 break
+            tk.Label(self, text=f"Core temp for {graphicsCard.deviceName}").pack()
 
         self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
