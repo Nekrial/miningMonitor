@@ -22,7 +22,7 @@ class gpu:
                  restartMiner=0, shutdownSequence=0, email=None):
         self.deviceID = deviceID
         # Trimming the name down after the x as x is shared by both gtx and rtx. Makes displaying the name easier later
-        self.deviceName = re.split("x",deviceName, flags=re.IGNORECASE)[1]
+        self.deviceName = re.split("geforce",deviceName, flags=re.IGNORECASE)[1]
         self.minerType = minerType
         self.email = email
         self.coreTemp = coreTemp
@@ -150,36 +150,41 @@ class gpu:
 
     def checkMaxHash(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
+        # TODO add a hashrate conversion method that will convert the hashrate into the desired algo
+        megaHashPerSecond = int(currentSpeed/1000000)
+
         # Error checking
         if currentSpeed =="Miner not detected":
             return "Miner not detected"
-        if int(str(currentSpeed)[:2]) > self.maxHash:
-            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+        if int(megaHashPerSecond) > self.maxHash:
+            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {megaHashPerSecond}c\n"
                            f"The max hashrate you set me to monitor was {self.maxHash}")
             return self.limitExceeded(emailPreset)
         # Current speed will either be a number or an error statement if the miner is not detected
-        return currentSpeed
+        return megaHashPerSecond
 
     def getCurrentHashrate(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
+        megaHashPerSecond = int(currentSpeed/1000000)
         # Error checking
         if currentSpeed == "Miner not detected":
             return "Miner not detected"
 
-        return str(int(currentSpeed)) + "mh/s"
+        return str(megaHashPerSecond) + "mh/s"
 
     def checkMinHash(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
+        megaHashPerSecond = int(currentSpeed/1000000)
 
         if currentSpeed =="Miner not detected":
             return "Miner not detected"
 
-        if int(str(currentSpeed)[:2]) <= self.minHash:
-            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {currentSpeed}c\n"
+        if int(megaHashPerSecond) <= self.minHash:
+            emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {megaHashPerSecond}c\n"
                            f"The min hashrate you set me to monitor was {self.minHash}")
             return self.limitExceeded(emailPreset)
         # Current speed will either be a number or an error statement if the miner is not detected
-        return currentSpeed
+        return megaHashPerSecond
 
     def notifyEmail(self, whatBroke):
         port = 465  # For SSL

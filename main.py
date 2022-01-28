@@ -443,7 +443,7 @@ class monitoringFrame(tk.Frame):
 
     def __init__(self, master):
         global gpuList
-        tk.Frame.__init__(self, master, width=700, height=350)
+        tk.Frame.__init__(self, master)
         master.title("Monitoring Station")
         self.frame = tk.Frame(self)
 
@@ -460,10 +460,8 @@ class monitoringFrame(tk.Frame):
         def errorWindow(incMessage):
             button1.pack_forget()
             label1.pack_forget()
-            tk.Label(self,
-                     text=incMessage).pack(
-                fill="x", pady=10)
-            tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
+            tk.Label(self, text=incMessage).grid()
+            tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).grid()
 
         if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
             tk.Label(self,
@@ -475,8 +473,9 @@ class monitoringFrame(tk.Frame):
             # The monitoring loop. Checks each gpus present
         label1 = tk.Label(self,
                           text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings")
-        label1.place(x=10, y=20)
+        label1.grid(columnspan=len(gpuList), padx=6)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
+        button1.place(x=self.winfo_width() / 2, y=self.winfo_height())
 
         # Check to make sure the gpus are still detectable by the system. If they are not it resycles the monitoring
         # This solves exceptions in the check methods that rely on the gpu being detected
@@ -486,22 +485,46 @@ class monitoringFrame(tk.Frame):
                 "update cycle for connection to be restored")
             self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
-        titleX = 20
-        titleY = 100
-        for graphicsCard in gpuList:
+        for index, graphicsCard in enumerate(gpuList):
+            # This is unpythonic but I am unsure how else to do it
+            currentRow = 1
+
             graphicsCard.checkMaxPower()
             graphicsCard.checkCoreTemp()
             graphicsCard.checkMemTemp()
             # Instead of raising an exception here we will check if the returned values of the checks are floats
             # If they are not floats then the email method returned its "error" message. The break cancels the checks
             # but allows it to keep running in the next cycle if connection is properly restored
-            if not isinstance(graphicsCard.checkMaxHash(), float) or not isinstance(graphicsCard.checkMinHash(), float):
+            if not isinstance(graphicsCard.checkMaxHash(), int) or not isinstance(graphicsCard.checkMinHash(), int):
                 errorWindow(
                     "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                     "update cycle for connection to be restored")
                 break
-            tk.Label(self, text=f"{graphicsCard.deviceName}\n").place(x=50, y=50)
 
+            tk.Label(self, text=f"{graphicsCard.deviceName}\n").grid(row=currentRow, column=index, sticky="w", padx=6)
+            currentRow += 1
+            tk.Label(self, text=f"Core Temp- {graphicsCard.getCurrentCoreTemp()}\n").grid(row=currentRow, column=index, sticky="w",
+                                                                               padx=6)
+            currentRow += 1
+            tk.Label(self, text=f"Memory Temp- {graphicsCard.getCurrentMemoryTemp()}\n").grid(row=currentRow, column=index,
+                                                                                 sticky="w",
+                                                                                 padx=6)
+            currentRow += 1
+            tk.Label(self, text=f"Hotspot Temp- {graphicsCard.getCurrentHotSpotTemp()}\n").grid(row=currentRow, column=index,
+                                                                                 sticky="w",
+                                                                                 padx=6)
+            currentRow += 1
+            tk.Label(self, text=f"Power Draw- {graphicsCard.getCurrentPowerDraw()}\n").grid(row=currentRow, column=index,
+                                                                                 sticky="w",
+                                                                                 padx=6)
+            currentRow += 1
+            tk.Label(self, text=f"Hashrate- {graphicsCard.getCurrentHashrate()}\n").grid(row=currentRow, column=index,
+                                                                                 sticky="w",
+                                                                                 padx=6)
+            print(graphicsCard.getCurrentHashrate())
+
+
+        f"Core Temp- {graphicsCard.getCurrentCoreTemp()}"
         self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
 
