@@ -95,12 +95,17 @@ class gpu:
         return str(int(graphicsCard.core_temp)) + "c"
 
     def checkMaxPower(self):
+        # Checking the physical main power rail to get the current power draw in Watts
         graphicsCard = get_phys_gpu(self.deviceID)
-        currentPower = graphicsCard.power
+        currentPower = graphicsCard.get_rail_powers()
+        # This for loop is looking for the string IN_TOTAL_BOARD as different device ids add a number to the end of the string
+        for key in currentPower:
+            if "IN_TOTAL_BOARD" in str(key):
+                powerInWatts = currentPower[key][0][0]
 
-        if currentPower >= self.powerMax:
+        if powerInWatts >= self.powerMax:
             emailPreset = (
-                f"The current power draw of gpu {self.deviceID} is currently {currentPower}c\n"
+                f"The current power draw of gpu {self.deviceID} is currently {powerInWatts}c\n"
                 f"The max power draw you set me to monitor was {self.powerMax}\n"
                 f"The device model is {graphicsCard.name}")
 
@@ -108,8 +113,12 @@ class gpu:
 
     def getCurrentPowerDraw(self):
         graphicsCard = get_phys_gpu(self.deviceID)
-        # Casting as an int to remove decimals and then casting as a string to add c to the end for Celsius
-        return str(int(graphicsCard.power)) + " watts"
+        currentPower = graphicsCard.get_rail_powers()
+        # This for loop is looking for the string IN_TOTAL_BOARD as different device ids add a number to the end of the string
+        for key in currentPower:
+            if "IN_TOTAL_BOARD" in str(key):
+                powerInWatts = currentPower[key][0][0]
+        return str(int(powerInWatts)) + " watts"
 
     def hotSpotTemp(self):
         graphicsCard = get_phys_gpu(self.deviceID)
@@ -163,7 +172,8 @@ class gpu:
         # Current speed will either be a number or an error statement if the miner is not detected
         return megaHashPerSecond
 
-    def getCurrentHashrate(self):
+    def getGPUCurrentHashrate(self):
+
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
         megaHashPerSecond = int(currentSpeed/1000000)
         # Error checking

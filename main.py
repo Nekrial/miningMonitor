@@ -487,6 +487,7 @@ class monitoringFrame(tk.Frame):
 
         for index, graphicsCard in enumerate(gpuList):
             # This is unpythonic but I am unsure how else to do it
+            # TODO make this and the label generation for loop based
             currentRow = 1
 
             graphicsCard.checkMaxPower()
@@ -503,28 +504,29 @@ class monitoringFrame(tk.Frame):
 
             tk.Label(self, text=f"{graphicsCard.deviceName}\n").grid(row=currentRow, column=index, sticky="w", padx=6)
             currentRow += 1
-            tk.Label(self, text=f"Core Temp- {graphicsCard.getCurrentCoreTemp()}\n").grid(row=currentRow, column=index, sticky="w",
-                                                                               padx=6)
+            tk.Label(self, text=f"Core Temp- {graphicsCard.getCurrentCoreTemp()}\n").grid(row=currentRow, column=index,
+                                                                                          sticky="w",
+                                                                                          padx=6)
             currentRow += 1
-            tk.Label(self, text=f"Memory Temp- {graphicsCard.getCurrentMemoryTemp()}\n").grid(row=currentRow, column=index,
-                                                                                 sticky="w",
-                                                                                 padx=6)
+            tk.Label(self, text=f"Memory Temp- {graphicsCard.getCurrentMemoryTemp()}\n").grid(row=currentRow,
+                                                                                              column=index,
+                                                                                              sticky="w",
+                                                                                              padx=6)
             currentRow += 1
-            tk.Label(self, text=f"Hotspot Temp- {graphicsCard.getCurrentHotSpotTemp()}\n").grid(row=currentRow, column=index,
-                                                                                 sticky="w",
-                                                                                 padx=6)
+            tk.Label(self, text=f"Hotspot Temp- {graphicsCard.getCurrentHotSpotTemp()}\n").grid(row=currentRow,
+                                                                                                column=index,
+                                                                                                sticky="w",
+                                                                                                padx=6)
             currentRow += 1
-            tk.Label(self, text=f"Power Draw- {graphicsCard.getCurrentPowerDraw()}\n").grid(row=currentRow, column=index,
-                                                                                 sticky="w",
-                                                                                 padx=6)
+            tk.Label(self, text=f"Power Draw- {graphicsCard.getCurrentPowerDraw()}\n").grid(row=currentRow,
+                                                                                            column=index,
+                                                                                            sticky="w",
+                                                                                            padx=6)
             currentRow += 1
-            tk.Label(self, text=f"Hashrate- {graphicsCard.getCurrentHashrate()}\n").grid(row=currentRow, column=index,
-                                                                                 sticky="w",
-                                                                                 padx=6)
-            print(graphicsCard.getCurrentHashrate())
+            tk.Label(self, text=f"Hashrate- {graphicsCard.getGPUCurrentHashrate()}\n").grid(row=currentRow, column=index,
+                                                                                            sticky="w",
+                                                                                            padx=6)
 
-
-        f"Core Temp- {graphicsCard.getCurrentCoreTemp()}"
         self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
 
