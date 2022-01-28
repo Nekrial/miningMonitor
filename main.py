@@ -7,10 +7,12 @@ import itertools
 import requests
 from requests import *
 import connectionAndAPI
+import nvidiagraphicscard
 from connectionAndAPI import *
 import os
 from configValidation import *
 import configValidation
+from nvidiagraphicscard import *
 
 gpuList = []
 
@@ -51,7 +53,7 @@ class createApp(tk.Tk):
                         json_object = json.load(f)
                         # This is in the event that the config does not contain
                         if configValidation.configVericaiton(json_object):
-                            gpuList.append(connectionAndAPI.gpu.from_json(json_object))
+                            gpuList.append(nvidiagraphicscard.gpu.from_json(json_object))
                         #     Todo add a more indepth test for config validation that does not reset the file completely
                         else:
                             # Manually closing f so that we are able to remove the file
@@ -264,7 +266,7 @@ class VariableSelection(tk.Frame):
                 if nextDevice is not None:
                     with open(f"Configs/config{nextDevice[0]}.txt", "w+") as outfile:
                         outfile.write(json_object)
-                        gpuList.append(connectionAndAPI.gpu.from_json(json_object))
+                        gpuList.append(nvidiagraphicscard.gpu.from_json(json_object))
 
                         if len(connectionAndAPI.gatherConfigs()) != connectionAndAPI.countGpus():
                             app.switch_frame(StartPage)
@@ -441,8 +443,9 @@ class monitoringFrame(tk.Frame):
 
     def __init__(self, master):
         global gpuList
-        tk.Frame.__init__(self, master)
+        tk.Frame.__init__(self, master, width=700, height=350)
         master.title("Monitoring Station")
+        self.frame = tk.Frame(self)
 
         def resetAll():
             dir = 'Configs'
@@ -472,18 +475,19 @@ class monitoringFrame(tk.Frame):
             # The monitoring loop. Checks each gpus present
         label1 = tk.Label(self,
                           text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings")
-        label1.pack(
-            fill="x", pady=10)
+        label1.place(x=10, y=20)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
-        button1.pack()
+
         # Check to make sure the gpus are still detectable by the system. If they are not it resycles the monitoring
         # This solves exceptions in the check methods that rely on the gpu being detected
-        if connectionAndAPI.testGpuConnection() == {}:
+        if len(connectionAndAPI.testGpuConnection()) == 0:
             errorWindow(
                 "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                 "update cycle for connection to be restored")
             self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
+        titleX = 20
+        titleY = 100
         for graphicsCard in gpuList:
             graphicsCard.checkMaxPower()
             graphicsCard.checkCoreTemp()
@@ -496,7 +500,7 @@ class monitoringFrame(tk.Frame):
                     "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                     "update cycle for connection to be restored")
                 break
-            tk.Label(self, text=f"Core temp for {graphicsCard.deviceName}").pack()
+            tk.Label(self, text=f"{graphicsCard.deviceName}\n").place(x=50, y=50)
 
         self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
