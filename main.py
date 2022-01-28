@@ -52,7 +52,7 @@ class createApp(tk.Tk):
                         # This is in the event that the config does not contain
                         if configValidation.configVericaiton(json_object):
                             gpuList.append(connectionAndAPI.gpu.from_json(json_object))
-                    #     Todo add a more indepth test for config validation that does not reset the file completely
+                        #     Todo add a more indepth test for config validation that does not reset the file completely
                         else:
                             os.remove(f"Configs/config{x}.txt")
                             self.switch_frame(StartPage)
@@ -110,6 +110,36 @@ class VariableSelection(tk.Frame):
         maxHashrateCheckboxVar = tk.IntVar(value=0)
 
         minHashrateCheckboxVar = tk.IntVar(value=0)
+
+        # The values array for the creation of the buttons in the loop
+        valueArray = [coreTempCheckVariable, gddrTempCheckboxVariable, gpuPowerCheckboxVar,
+                      hotSpotTempCheckboxVar, maxHashrateCheckboxVar, minHashrateCheckboxVar]
+        # The commands for the buttons
+        buttonCommands = {
+            0: lambda: [show_entry(coreTempCheckVariable, coreTempInput, 103, 100),
+                        coreTempInput.insert(tk.END, "Enter Max Core Temp")],
+            1: lambda: [show_entry(gddrTempCheckboxVariable, gddrInput, 121, 134),
+                        gddrInput.insert(tk.END, "Enter Max Memory Temp")],
+            2: lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput, 134, 170),
+                        gpuPowerInput.insert(tk.END, "Enter Max Power(Watts)")],
+            3: lambda: [show_entry(hotSpotTempCheckboxVar, hotSpotTempInput, 126, 201),
+                        hotSpotTempInput.insert(tk.END, "Enter Max Hot Spot")],
+            4: lambda: [show_entry(maxHashrateCheckboxVar, maxHashrateInput, 126, 230),
+                        maxHashrateInput.insert(tk.END, "Enter Max Hashrate")],
+            5: lambda: [show_entry(minHashrateCheckboxVar, minHashrateInput, 140, 260),
+                        minHashrateInput.insert(tk.END, "Enter Min Hashrate")]
+        }
+        # The text for each input used during button creation
+        whatDoText = [
+            "Core Temp",
+            "GDDR6X Temp",
+            "Gpu Power Draw",
+            "Hot Spot Temp",
+            'Max Hashrate',
+            'Minimum Hashrate'
+        ]
+
+        yVars = [97, 131, 167, 198, 227, 257]
 
         # Getters
 
@@ -224,7 +254,6 @@ class VariableSelection(tk.Frame):
 
             # The break cases where the data should not be sent to further processing
             if dict["minerType"] is None:
-
                 return
             else:
 
@@ -247,39 +276,30 @@ class VariableSelection(tk.Frame):
 
         # Making the monitor label
         Label(self, text='What would you like me to monitor?', font=('arial', 13, 'normal')).place(x=12, y=30)
+
+        # The creation of the buttons in a loop
+        for index, name in enumerate(whatDoText):
+            # Generating the checkboxes
+            x = Checkbutton(self, onvalue=1, offvalue=0, text=whatDoText[index], variable=valueArray[index],
+                            font=('arial', 8, 'normal'), command=buttonCommands[index])
+            x.place(x=9, y=yVars[index])
+
         # core temp input and checkbox block
         coreTempInput = Entry(self, width=20, )
         coreTempInput.bind("<Button-1>", on_click)
         coreTempInput.configure(state="disabled")
-
-        CoreTempCheck = Checkbutton(self, onvalue=1, offvalue=0, text='Core Temp', variable=coreTempCheckVariable,
-                                    font=('arial', 8, 'normal'),
-                                    command=lambda: [show_entry(coreTempCheckVariable, coreTempInput, 103, 100),
-                                                     coreTempInput.insert(tk.END, "Enter Max Core Temp")
-                                                     ])
-        CoreTempCheck.place(x=9, y=97)
         # end core temp block
 
         # Gddr6x input block
-        gddrInput = Entry(self, width=20)
+        gddrInput = Entry(self, width=23)
         gddrInput.bind("<Button-1>", on_click)
         gddrInput.configure(state="disabled")
-        # This is the section of code which creates a checkbox
-        gddrTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='GDDR6X Temp',
-                                       variable=gddrTempCheckboxVariable,
-                                       command=lambda: [show_entry(gddrTempCheckboxVariable, gddrInput, 121, 134),
-                                                        gddrInput.insert(tk.END, "Enter Max Memory Temp")])
-        gddrTempCheckbox.place(x=9, y=131)
         # end gddr block
 
         # Power input block
         gpuPowerInput = Entry(self, width=21)
         gpuPowerInput.bind("<Button-1>", on_click)
         gpuPowerInput.configure(state="disabled")
-        gpuPowerCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Gpu Power Draw', variable=gpuPowerCheckboxVar,
-                                       command=lambda: [show_entry(gpuPowerCheckboxVar, gpuPowerInput, 134, 170),
-                                                        gpuPowerInput.insert(tk.END, "Enter Max Power(Watts)")])
-        gpuPowerCheckbox.place(x=9, y=167)
         # End gpu power input block
 
         # hotspot block
@@ -287,36 +307,15 @@ class VariableSelection(tk.Frame):
         hotSpotTempInput.bind("<Button-1>", on_click)
         hotSpotTempInput.configure(state="disabled")
 
-        hotSpotTempCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Hot Spot Temp',
-                                          variable=hotSpotTempCheckboxVar,
-                                          command=lambda: [
-                                              show_entry(hotSpotTempCheckboxVar, hotSpotTempInput, 126, 201),
-                                              hotSpotTempInput.insert(tk.END, "Enter Max Hot Spot")])
-        hotSpotTempCheckbox.place(x=9, y=198)
-
         # Max Hashrate block
         maxHashrateInput = Entry(self, width=20)
         maxHashrateInput.bind("<Button-1>", on_click)
         maxHashrateInput.configure(state="disabled")
 
-        maxHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Max Hashrate',
-                                          variable=maxHashrateCheckboxVar,
-                                          command=lambda: [
-                                              show_entry(maxHashrateCheckboxVar, maxHashrateInput, 126, 230),
-                                              maxHashrateInput.insert(tk.END, "Enter Max Hashrate")])
-        maxHashrateCheckbox.place(x=9, y=227)
-
         # Min Hashrate block
         minHashrateInput = Entry(self, width=25)
         minHashrateInput.bind("<Button-1>", on_click)
         minHashrateInput.configure(state="disabled")
-
-        minHashrateCheckbox = Checkbutton(self, onvalue=1, offvalue=0, text='Minimum Hashrate',
-                                          variable=minHashrateCheckboxVar,
-                                          command=lambda: [
-                                              show_entry(minHashrateCheckboxVar, minHashrateInput, 140, 260),
-                                              minHashrateInput.insert(tk.END, "Enter Min Hashrate")])
-        minHashrateCheckbox.place(x=9, y=257)
 
         # This is the section of code which creates a button
         Button(self, text='Continue', bg='#F0F8FF', font=('arial', 8, 'normal'), command=lambda: getAllAndCheck(
@@ -458,6 +457,7 @@ class monitoringFrame(tk.Frame):
                      text=incMessage).pack(
                 fill="x", pady=10)
             tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).pack()
+
         if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
             tk.Label(self,
                      text="I cannot connect to the miner. Do you have it running?").pack(
@@ -497,7 +497,6 @@ class monitoringFrame(tk.Frame):
 
 
 if __name__ == "__main__":
-
     app = createApp()
 
     app.mainloop()
