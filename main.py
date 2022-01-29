@@ -455,6 +455,8 @@ class monitoringFrame(tk.Frame):
                 master.switch_frame(StartPage)
             for f in os.listdir(dir):
                 os.remove(os.path.join(dir, f))
+            gpuList.clear()
+
             master.switch_frame(StartPage)
 
         def errorWindow(incMessage):
@@ -469,6 +471,7 @@ class monitoringFrame(tk.Frame):
         label1.grid(columnspan=len(gpuList), padx=6)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
 
+        button1.grid(column = int(len(gpuList)/2)-1, row= 7, sticky = "SE")
 
         # Check to make sure the gpus are still detectable by the system. If they are not it resycles the monitoring
         # This solves exceptions in the check methods that rely on the gpu being detected
@@ -476,6 +479,8 @@ class monitoringFrame(tk.Frame):
             errorWindow(
                 "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                 "update cycle for connection to be restored")
+            button1.grid_forget()
+            label1.grid_forget()
             var = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
             var.grid()
             self.after(30000, lambda: master.switch_frame(monitoringFrame))
@@ -521,7 +526,7 @@ class monitoringFrame(tk.Frame):
             tk.Label(self, text=f"Hashrate- {graphicsCard.getGPUCurrentHashrate()}\n").grid(row=currentRow, column=index,
                                                                                             sticky="w",
                                                                                             padx=6)
-        button1.grid()
+
         self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
 

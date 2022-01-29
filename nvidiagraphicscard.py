@@ -101,7 +101,7 @@ class gpu:
             emailPreset = (
                 f"The current power draw of gpu {self.deviceID} is currently {powerInWatts}c\n"
                 f"The max power draw you set me to monitor was {self.powerMax}\n"
-                f"The device model is {graphicsCard.name}")
+                f"The device model is {self.name}")
 
             return self.limitExceeded(emailPreset)
 

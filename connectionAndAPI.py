@@ -28,7 +28,6 @@ def getCurrentHashrate(currentMiner, deviceID):
         workerInformation = requests.get(
             'http://localhost:18000/api?command={"id":1,"method":"worker.list","params":[]}', timeout=.1)
         workerInformation = workerInformation.json()
-
         currentSpeed = workerInformation["workers"][deviceID]['algorithms'][0]['speed']
 
         return currentSpeed
