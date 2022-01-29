@@ -458,24 +458,17 @@ class monitoringFrame(tk.Frame):
             master.switch_frame(StartPage)
 
         def errorWindow(incMessage):
-            button1.pack_forget()
-            label1.pack_forget()
+            button1.grid_forget()
+            label1.grid_forget()
             tk.Label(self, text=incMessage).grid()
             tk.Button(self, text="Reset Profiles", command=lambda: resetAll()).grid()
-
-        if connectionAndAPI.testGpuConnection() == "testGPUConnection Error":
-            tk.Label(self,
-                     text="I cannot connect to the miner. Do you have it running?").pack(
-                fill="x", pady=10)
-            var = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
-            var.pack()
 
             # The monitoring loop. Checks each gpus present
         label1 = tk.Label(self,
                           text="Oh hello! Connection has been successfully made to your gpu. I am currently monitoring based on your proposed settings")
         label1.grid(columnspan=len(gpuList), padx=6)
         button1 = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
-        button1.place(x=self.winfo_width() / 2, y=self.winfo_height())
+
 
         # Check to make sure the gpus are still detectable by the system. If they are not it resycles the monitoring
         # This solves exceptions in the check methods that rely on the gpu being detected
@@ -483,6 +476,8 @@ class monitoringFrame(tk.Frame):
             errorWindow(
                 "I have lost my connection to the miner. Please make sure it is running or wait for the next"
                 "update cycle for connection to be restored")
+            var = tk.Button(self, text="Reset Profiles", command=lambda: resetAll())
+            var.grid()
             self.after(30000, lambda: master.switch_frame(monitoringFrame))
 
         for index, graphicsCard in enumerate(gpuList):
@@ -518,7 +513,7 @@ class monitoringFrame(tk.Frame):
                                                                                                 sticky="w",
                                                                                                 padx=6)
             currentRow += 1
-            tk.Label(self, text=f"Power Draw- {graphicsCard.getCurrentPowerDraw()}\n").grid(row=currentRow,
+            tk.Label(self, text=f"Power Draw- {graphicsCard.getCurrentPowerDraw()} watts\n").grid(row=currentRow,
                                                                                             column=index,
                                                                                             sticky="w",
                                                                                             padx=6)
@@ -526,7 +521,7 @@ class monitoringFrame(tk.Frame):
             tk.Label(self, text=f"Hashrate- {graphicsCard.getGPUCurrentHashrate()}\n").grid(row=currentRow, column=index,
                                                                                             sticky="w",
                                                                                             padx=6)
-
+        button1.grid()
         self.after(10000, lambda: master.switch_frame(monitoringFrame))
 
 

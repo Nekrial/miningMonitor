@@ -95,13 +95,7 @@ class gpu:
         return str(int(graphicsCard.core_temp)) + "c"
 
     def checkMaxPower(self):
-        # Checking the physical main power rail to get the current power draw in Watts
-        graphicsCard = get_phys_gpu(self.deviceID)
-        currentPower = graphicsCard.get_rail_powers()
-        # This for loop is looking for the string IN_TOTAL_BOARD as different device ids add a number to the end of the string
-        for key in currentPower:
-            if "IN_TOTAL_BOARD" in str(key):
-                powerInWatts = currentPower[key][0][0]
+        powerInWatts = self.getCurrentPowerDraw()
 
         if powerInWatts >= self.powerMax:
             emailPreset = (
@@ -112,13 +106,16 @@ class gpu:
             return self.limitExceeded(emailPreset)
 
     def getCurrentPowerDraw(self):
+        # Checking the physical main power rail to get the current power draw in Watts
         graphicsCard = get_phys_gpu(self.deviceID)
         currentPower = graphicsCard.get_rail_powers()
         # This for loop is looking for the string IN_TOTAL_BOARD as different device ids add a number to the end of the string
         for key in currentPower:
             if "IN_TOTAL_BOARD" in str(key):
                 powerInWatts = currentPower[key][0][0]
-        return str(int(powerInWatts)) + " watts"
+                return int(powerInWatts)
+        # Returning a current power draw of 0 in case gpu connection is lost this avoid and exception
+        return 0
 
     def hotSpotTemp(self):
         graphicsCard = get_phys_gpu(self.deviceID)
@@ -159,12 +156,15 @@ class gpu:
 
     def checkMaxHash(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
-        # TODO add a hashrate conversion method that will convert the hashrate into the desired algo
-        megaHashPerSecond = int(currentSpeed/1000000)
-
         # Error checking
         if currentSpeed =="Miner not detected":
             return "Miner not detected"
+
+
+        # TODO add a hashrate conversion method that will convert the hashrate into the desired algo
+        megaHashPerSecond = int(currentSpeed/1000000)
+        # Error checking
+
         if int(megaHashPerSecond) > self.maxHash:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {megaHashPerSecond}c\n"
                            f"The max hashrate you set me to monitor was {self.maxHash}")
@@ -175,19 +175,18 @@ class gpu:
     def getGPUCurrentHashrate(self):
 
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
-        megaHashPerSecond = int(currentSpeed/1000000)
         # Error checking
         if currentSpeed == "Miner not detected":
             return "Miner not detected"
 
+        megaHashPerSecond = int(currentSpeed/1000000)
         return str(megaHashPerSecond) + "mh/s"
 
     def checkMinHash(self):
         currentSpeed = getCurrentHashrate(self.minerType, self.deviceID)
-        megaHashPerSecond = int(currentSpeed/1000000)
-
         if currentSpeed =="Miner not detected":
             return "Miner not detected"
+        megaHashPerSecond = int(currentSpeed/1000000)
 
         if int(megaHashPerSecond) <= self.minHash:
             emailPreset = (f"The hashrate of gpu {self.deviceID} is currently {megaHashPerSecond}c\n"
